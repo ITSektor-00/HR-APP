@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from 'next/link'
+import SidebarNav from './SidebarNav'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,10 +26,43 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className="bg-[#f4f6fb]">
+        <div className="flex h-screen">
+          {/* Sidebar */}
+          <aside className="w-64 bg-[#F3F4F6] border-r flex flex-col">
+            <div className="h-16 flex items-center justify-center border-b bg-[#3A3CA6]">
+              <span className="font-bold text-lg flex items-center gap-2 text-white">
+                {/* Ikonica placeholder */}
+                <span className="w-6 h-6 bg-white/30 rounded" />
+                HR Platforma
+              </span>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-2">
+              <SidebarNav />
+            </nav>
+          </aside>
+          {/* Main content */}
+          <div className="flex-1 flex flex-col">
+            {/* Header */}
+            <header className="h-16 bg-[#3A3CA6] border-b flex items-center px-6 justify-between">
+              <div className="flex items-center gap-2 w-1/2">
+                <input
+                  type="text"
+                  placeholder="Pretraži sve..."
+                  className="w-full px-3 py-2 rounded bg-white/80 border focus:outline-none text-[#3A3CA6] placeholder:text-[#3A3CA6]/60"
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                {/* Svetli režim, jezik, notifikacije, user avatar - placeholderi */}
+                <span className="w-6 h-6 bg-white/40 rounded" />
+                <span className="w-6 h-6 bg-white/40 rounded" />
+                <span className="w-6 h-6 bg-white/40 rounded" />
+                <span className="w-8 h-8 bg-white/60 rounded-full flex items-center justify-center font-bold text-[#3A3CA6]">AA</span>
+              </div>
+            </header>
+            <main className="flex-1 overflow-y-auto p-6 bg-[#181818] text-white">{children}</main>
+          </div>
+        </div>
       </body>
     </html>
   );
