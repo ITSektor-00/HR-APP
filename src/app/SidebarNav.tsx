@@ -13,8 +13,8 @@ const sections = [
   {
     title: 'KORISNICI',
     links: [
-      { href: '/korisnici/korisnici', label: 'Korisnici' },
-      { href: '/korisnici/beleske', label: 'Beleške' },
+      { href: '/korisnici/korisnici', label: 'Korisnici', icon: <img src="/ikonice/korisnici.svg" alt="Korisnici" className="w-5 h-5" /> },
+      { href: '/korisnici/beleske', label: 'Beleške', icon: <img src="/ikonice/beleske.svg" alt="Beleške" className="w-5 h-5" /> },
     ],
   },
   {
@@ -75,7 +75,7 @@ export default function SidebarNav() {
           <div className="space-y-1">
             {section.links.map((link) => (
               <Link key={link.href} href={link.href} className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 text-black">
-                <span className="w-5 h-5 bg-black/10 rounded" />
+                {link.icon ? link.icon : <span className="w-5 h-5 bg-black/10 rounded" />}
                 {link.label}
               </Link>
             ))}
