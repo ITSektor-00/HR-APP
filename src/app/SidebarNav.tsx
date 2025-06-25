@@ -1,5 +1,11 @@
 import Link from 'next/link'
 
+interface NavLink {
+  href: string
+  label: string
+  icon?: React.ReactElement
+}
+
 const sections = [
   {
     title: 'PRISUSTVO',
@@ -8,14 +14,14 @@ const sections = [
       { href: '/prisustvo/prisustva', label: 'Prisustva' },
       { href: '/prisustvo/odsustva', label: 'Odsustva' },
       { href: '/prisustvo/tokeni', label: 'Tokeni' },
-    ],
+    ] as NavLink[],
   },
   {
     title: 'KORISNICI',
     links: [
       { href: '/korisnici/korisnici', label: 'Korisnici', icon: <img src="/ikonice/korisnici.svg" alt="Korisnici" className="w-5 h-5" /> },
       { href: '/korisnici/beleske', label: 'Beleške', icon: <img src="/ikonice/beleske.svg" alt="Beleške" className="w-5 h-5" /> },
-    ],
+    ] as NavLink[],
   },
   {
     title: 'KANCELARIJA',
