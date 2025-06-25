@@ -21,24 +21,21 @@ const sections = [
     links: [
       { href: '/korisnici/korisnici', label: 'Korisnici', icon: <img src="/ikonice/korisnici.svg" alt="Korisnici" className="w-5 h-5" /> },
       { href: '/korisnici/beleske', label: 'Beleške', icon: <img src="/ikonice/beleske.svg" alt="Beleške" className="w-5 h-5" /> },
-      { href: '/korisnici/ugovori', label: 'Ugovori', icon: <img src="/ikonice/ugovori.svg" alt="Ugovori" className="w-5 h-5" /> },
-      { href: '/korisnici/dokumenti', label: 'Dokumenti', icon: <img src="/ikonice/dokumenti.svg" alt="Dokumenti" className="w-5 h-5" /> },
-      { href: '/korisnici/oglasiZaPosao', label: 'Oglasi za posao', icon: <img src="/ikonice/oglasiZaPosao.svg" alt="Oglasi za posao" className="w-5 h-5" /> },
     ] as NavLink[],
   },
   {
     title: 'KANCELARIJA',
     links: [
-      { href: '/kancelarija/ugovori', label: 'Ugovori' },
-      { href: '/kancelarija/dokumenti', label: 'Dokumenti' },
+      { href: '/korisnici/ugovori', label: 'Ugovori', icon: <img src="/ikonice/ugovori.svg" alt="Ugovori" className="w-5 h-5" /> },
+      { href: '/korisnici/dokumenti', label: 'Dokumenti', icon: <img src="/ikonice/dokumenti.svg" alt="Dokumenti" className="w-5 h-5" /> },
     ],
   },
   {
     title: 'ZAPOSLENJE',
     links: [
-      { href: '/zaposlenje/oglasi', label: 'Oglasi za posao' },
-      { href: '/zaposlenje/prijave', label: 'Prijave' },
-      { href: '/zaposlenje/intervjui', label: 'Intervjui' },
+      { href: '/korisnici/oglasiZaPosao', label: 'Oglasi za posao', icon: <img src="/ikonice/oglasiZaPosao.svg" alt="Oglasi za posao" className="w-5 h-5" /> },
+      { href: '/zaposlenje/prijave', label: 'Prijave', icon: <img src="/ikonice/prijave.svg" alt="Prijave" className="w-5 h-5" /> },
+      { href: '/zaposlenje/intervjui', label: 'Intervjui', icon: <img src="/ikonice/intervjui.svg" alt="Intervjui" className="w-5 h-5" /> },
     ],
   },
   {
