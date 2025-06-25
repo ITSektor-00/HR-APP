@@ -50,7 +50,7 @@ const sections = [
     title: 'VOZILA',
     links: [
       { href: '/vozila/vozila', label: 'Vozila', icon: <img src="/ikonice/vozila.svg" alt="Vozila" className="w-5 h-5" /> },
-      { href: '/vozila/registracije', label: 'Registracije vozila', icon: <img src="/ikonice/registracije.svg" alt="Registracije vozila" className="w-5 h-5" /> },
+      { href: '/vozila/registracijeVozila', label: 'Registracije vozila', icon: <img src="/ikonice/registracijeVozila.svg" alt="Registracije vozila" className="w-5 h-5" /> },
     ] as NavLink[],
   },
   {
