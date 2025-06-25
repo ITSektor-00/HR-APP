@@ -41,9 +41,9 @@ const sections = [
   {
     title: 'SERTIFIKATI',
     links: [
-      { href: '/sertifikati/sertifikati', label: 'Sertifikati' },
-      { href: '/sertifikati/institucije', label: 'Institucije sertifikata' },
-      { href: '/sertifikati/vrste', label: 'Vrste sertifikata' },
+      { href: '/sertifikati/sertifikati', label: 'Sertifikati', icon: <img src="/ikonice/sertifikati.svg" alt="Sertifikati" className="w-5 h-5" /> },
+      { href: '/sertifikati/institucije', label: 'Institucije sertifikata', icon: <img src="/ikonice/institucijeSertifikata.svg" alt="Institucije sertifikata" className="w-5 h-5" /> },
+      { href: '/sertifikati/vrste', label: 'Vrste sertifikata', icon: <img src="/ikonice/vrsteSertifikata.svg" alt="Vrste sertifikata" className="w-5 h-5" /> },
     ] as NavLink[],
   },
   {
