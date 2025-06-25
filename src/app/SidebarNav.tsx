@@ -21,9 +21,6 @@ const sections = [
     links: [
       { href: '/korisnici/korisnici', label: 'Korisnici', icon: <img src="/ikonice/korisnici.svg" alt="Korisnici" className="w-5 h-5" /> },
       { href: '/korisnici/beleske', label: 'Beleške', icon: <img src="/ikonice/beleske.svg" alt="Beleške" className="w-5 h-5" /> },
-      { href: '/korisnici/ugovori', label: 'Ugovori', icon: <img src="/ikonice/ugovori.svg" alt="Ugovori" className="w-5 h-5" /> },
-      { href: '/korisnici/dokumenti', label: 'Dokumenti', icon: <img src="/ikonice/dokumenti.svg" alt="Dokumenti" className="w-5 h-5" /> },
-      { href: '/korisnici/oglasiZaPosao', label: 'Oglasi za posao', icon: <img src="/ikonice/oglasiZaPosao.svg" alt="Oglasi za posao" className="w-5 h-5" /> },
     ] as NavLink[],
   },
   {
@@ -47,14 +44,14 @@ const sections = [
       { href: '/sertifikati/sertifikati', label: 'Sertifikati' },
       { href: '/sertifikati/institucije', label: 'Institucije sertifikata' },
       { href: '/sertifikati/vrste', label: 'Vrste sertifikata' },
-    ],
+    ] as NavLink[],
   },
   {
     title: 'VOZILA',
     links: [
       { href: '/vozila/vozila', label: 'Vozila' },
       { href: '/vozila/registracije', label: 'Registracije vozila' },
-    ],
+    ] as NavLink[],
   },
   {
     title: 'KOMPANIJA',
@@ -65,7 +62,7 @@ const sections = [
       { href: '/kompanija/lokacije', label: 'Lokacije' },
       { href: '/kompanija/sektori', label: 'Sektori' },
       { href: '/kompanija/org-shema', label: 'Organizaciona šema' },
-    ],
+    ] as NavLink[],
   },
 ]
 
