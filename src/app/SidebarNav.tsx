@@ -15,6 +15,8 @@ const sections = [
     links: [
       { href: '/korisnici/korisnici', label: 'Korisnici', icon: <img src="/ikonice/korisnici.svg" alt="Korisnici" className="w-5 h-5" /> },
       { href: '/korisnici/beleske', label: 'Beleške', icon: <img src="/ikonice/beleske.svg" alt="Beleške" className="w-5 h-5" /> },
+      // ovde dodati sve ostale ikone
+    
     ],
   },
   {
