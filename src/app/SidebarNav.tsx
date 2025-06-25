@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import React from 'react'
 
 interface NavLink {
   href: string
@@ -72,18 +73,6 @@ const sections = [
 export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   const pathname = usePathname()
 
-  // Helper za tooltip
-  function Tooltip({ children, label }: { children: React.ReactNode, label: string }) {
-    return (
-      <div className="relative group">
-        {children}
-        <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 rounded bg-[#e5e7eb] text-[#343741] text-[15px] font-semibold shadow border border-[#e5e7eb] opacity-0 group-hover:opacity-100 transition-opacity duration-100 whitespace-nowrap z-20">
-          {label}
-        </span>
-      </div>
-    )
-  }
-
   return (
     <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'} overflow-x-hidden`}>
       <div className="flex flex-col w-full">
@@ -93,7 +82,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
           label="Komandna tabla"
           active={pathname === '/'}
           sidebarOpen={sidebarOpen}
-          Tooltip={Tooltip}
         />
       </div>
       {sections.map((section, idx) => (
@@ -102,7 +90,7 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
             <div className="w-7 h-0.5 bg-[#e5e7eb] mx-auto my-1 rounded-full opacity-70" />
           )}
           {sidebarOpen && (
-            <div className="text-[10px] text-[#7c7e8c] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
+            <div className="text-[14px] text-[#7c7e8c] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
               {section.title}
             </div>
           )}
@@ -115,7 +103,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
                 label={link.label}
                 active={pathname === link.href}
                 sidebarOpen={sidebarOpen}
-                Tooltip={Tooltip}
               />
             ))}
           </div>
@@ -141,11 +128,30 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   )
 }
 
-function SidebarItem({ href, icon, label, active, sidebarOpen, Tooltip }: { href: string, icon?: React.ReactElement, label: string, active: boolean, sidebarOpen: boolean, Tooltip: any }) {
-  // Kada je zatvoren sidebar, hover efekat i tooltip
+function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string, icon?: React.ReactElement, label: string, active: boolean, sidebarOpen: boolean }) {
+  const iconRef = React.useRef<HTMLSpanElement>(null);
+  const [tooltipPos, setTooltipPos] = React.useState<{top: number, left: number} | null>(null);
+
+  // On hover, set tooltip position
+  function handleMouseEnter() {
+    if (iconRef.current) {
+      const rect = iconRef.current.getBoundingClientRect();
+      setTooltipPos({
+        top: rect.top + rect.height / 2,
+        left: rect.right + 8,
+      });
+    }
+  }
+  function handleMouseLeave() {
+    setTooltipPos(null);
+  }
+
   if (!sidebarOpen) {
     return (
-      <Tooltip label={label}>
+      <div className="relative flex items-center justify-center w-full"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <Link
           href={href}
           scroll={false}
@@ -155,11 +161,26 @@ function SidebarItem({ href, icon, label, active, sidebarOpen, Tooltip }: { href
           `}
           tabIndex={0}
         >
-          <span className={`w-5 h-5 flex items-center justify-center ${active ? 'font-bold' : ''}`}>{icon}</span>
+          <span ref={iconRef} className={`w-5 h-5 flex items-center justify-center ${active ? 'font-bold' : ''}`}>{icon}</span>
         </Link>
-      </Tooltip>
+        {/* Tooltip koji se pojavljuje odmah na hover, fixed pozicija */}
+        {tooltipPos && (
+          <span
+            className="pointer-events-none fixed px-3 py-1.5 rounded-lg bg-[#e5e7eb] text-[#343741] text-[15px] font-semibold shadow-lg border border-[#e5e7eb] opacity-100 whitespace-nowrap z-50 select-none drop-shadow-md"
+            style={{
+              top: tooltipPos.top,
+              left: tooltipPos.left,
+              transform: 'translateY(-50%)',
+              minWidth: 80,
+            }}
+          >
+            {label}
+          </span>
+        )}
+      </div>
     )
   }
+  
   // Otvoreni sidebar - stara logika
   return (
     <Link
@@ -178,12 +199,6 @@ function SidebarItem({ href, icon, label, active, sidebarOpen, Tooltip }: { href
       <span className={`w-4 h-4 flex items-center justify-center z-10 ${active ? 'font-bold' : ''}`}>{icon}</span>
       {sidebarOpen && (
         <span className={`truncate z-10 ${active ? 'font-bold' : 'font-normal'} hover:underline`} style={{maxWidth: 120, marginLeft: 8}}>{label}</span>
-      )}
-      {/* Tooltip za zatvoren sidebar */}
-      {!sidebarOpen && (
-        <span className="absolute left-full ml-2 px-2 py-1 rounded bg-[#e5e7eb] text-[#343741] text-[15px] font-semibold shadow border border-[#e5e7eb] opacity-100 group-hover:opacity-100 transition-opacity duration-75 whitespace-nowrap z-20 pointer-events-none">
-          {label}
-        </span>
       )}
     </Link>
   )
