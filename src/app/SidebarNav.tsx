@@ -10,10 +10,10 @@ const sections = [
   {
     title: 'PRISUSTVO',
     links: [
-      { href: '/prisustvo/hronologija', label: 'Hronologija' },
-      { href: '/prisustvo/prisustva', label: 'Prisustva' },
-      { href: '/prisustvo/odsustva', label: 'Odsustva' },
-      { href: '/prisustvo/tokeni', label: 'Tokeni' },
+      { href: '/prisustvo/hronologija', label: 'Hronologija', icon: <img src="/ikonice/hronologija.svg" alt="Hronologija" className="w-5 h-5" /> },
+      { href: '/prisustvo/prisustva', label: 'Prisustva', icon: <img src="/ikonice/prisustva.svg" alt="Prisustva" className="w-5 h-5" /> },
+      { href: '/prisustvo/odsustva', label: 'Odsustva', icon: <img src="/ikonice/odsustva.svg" alt="Odsustva" className="w-5 h-5" /> },
+      { href: '/prisustvo/tokeni', label: 'Tokeni', icon: <img src="/ikonice/tokeni.svg" alt="Tokeni" className="w-5 h-5" /> },
     ] as NavLink[],
   },
   {
