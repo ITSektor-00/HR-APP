@@ -49,19 +49,19 @@ const sections = [
   {
     title: 'VOZILA',
     links: [
-      { href: '/vozila/vozila', label: 'Vozila' },
-      { href: '/vozila/registracije', label: 'Registracije vozila' },
+      { href: '/vozila/vozila', label: 'Vozila', icon: <img src="/ikonice/vozila.svg" alt="Vozila" className="w-5 h-5" /> },
+      { href: '/vozila/registracije', label: 'Registracije vozila', icon: <img src="/ikonice/registracije.svg" alt="Registracije vozila" className="w-5 h-5" /> },
     ] as NavLink[],
   },
   {
     title: 'KOMPANIJA',
     links: [
-      { href: '/kompanija/podesavanja', label: 'Podešavanja' },
-      { href: '/kompanija/uloge', label: 'Uloge' },
-      { href: '/kompanija/pozicije', label: 'Pozicije' },
-      { href: '/kompanija/lokacije', label: 'Lokacije' },
-      { href: '/kompanija/sektori', label: 'Sektori' },
-      { href: '/kompanija/org-shema', label: 'Organizaciona šema' },
+      { href: '/kompanija/podesavanja', label: 'Podešavanja', icon: <img src="/ikonice/podesavanja.svg" alt="Podešavanja" className="w-5 h-5" /> },
+      { href: '/kompanija/uloge', label: 'Uloge', icon: <img src="/ikonice/uloge.svg" alt="Uloge" className="w-5 h-5" /> },
+      { href: '/kompanija/pozicije', label: 'Pozicije', icon: <img src="/ikonice/pozicije.svg" alt="Pozicije" className="w-5 h-5" /> },
+      { href: '/kompanija/lokacije', label: 'Lokacije', icon: <img src="/ikonice/lokacije.svg" alt="Lokacije" className="w-5 h-5" /> },
+      { href: '/kompanija/sektori', label: 'Sektori', icon: <img src="/ikonice/sektori.svg" alt="Sektori" className="w-5 h-5" /> },
+      { href: '/kompanija/org-shema', label: 'Organizaciona šema', icon: <img src="/ikonice/org-shema.svg" alt="Organizaciona šema" className="w-5 h-5" /> },
     ] as NavLink[],
   },
 ]
