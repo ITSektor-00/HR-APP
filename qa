@@ -1,0 +1,213 @@
+[33mcommit 5b3589e18c36624ec20558a1cb6894244a18f51a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 10:44:24 2025 +0200
+
+    ikonice dodate
+
+A	public/ikonice/hronologija.svg
+A	public/ikonice/odsustva.svg
+A	public/ikonice/tokeni.svg
+
+[33mcommit f33dc3ef8024ae3e14919480e6d65263f28802ef[m
+Merge: 1fe099b 54ae4bb
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 10:27:39 2025 +0200
+
+    Merge branch 'main' of https://github.com/ITSektor-00/HR-APP
+
+[33mcommit 1fe099b51178bf1a7732b1398c478c1ae429051e[m
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 10:27:29 2025 +0200
+
+    prepravljena vozila
+
+M	src/app/SidebarNav.tsx
+
+[33mcommit 54ae4bb217757da2f79a4343a23b7f16d4fa2fd9[m
+Merge: 2918512 00e21a5
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 10:24:55 2025 +0200
+
+    Merge branch 'main' of https://github.com/ITSektor-00/HR-APP
+
+[33mcommit 29185120b4b0047f93a7af3fa6fb3fd10a1f02f8[m
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 10:24:51 2025 +0200
+
+    dodate ikonice
+
+A	public/ikonice/lokacije.svg
+A	public/ikonice/org-shema.svg
+A	public/ikonice/podesavanja.svg
+A	public/ikonice/pozicije.svg
+A	public/ikonice/registracijeVozila.svg
+A	public/ikonice/sektori.svg
+A	public/ikonice/uloge.svg
+
+[33mcommit 00e21a52f213472bee769ba0b1579b7a4d8cc6af[m
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 10:23:06 2025 +0200
+
+    dopunjen tekst za ikonice
+
+M	src/app/SidebarNav.tsx
+
+[33mcommit 413582fa1d0b7dba26f1bac7da440da57df7394d[m
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 10:15:52 2025 +0200
+
+    promena naziva ikonica
+
+M	src/app/SidebarNav.tsx
+
+[33mcommit de86463314c711a724f93cb2c979507ba3429324[m
+Merge: 59eee9b 128b6e9
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 10:10:39 2025 +0200
+
+    Merge branch 'main' of https://github.com/ITSektor-00/HR-APP
+
+[33mcommit 59eee9ba93c984d6af8deb33a23ebd821cfb064f[m
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 10:10:32 2025 +0200
+
+    dodate ikonice
+
+A	public/ikonice/institucije.svg
+A	public/ikonice/sertifikati.svg
+A	public/ikonice/vozila.svg
+A	public/ikonice/vrsteSertifikati.svg
+
+[33mcommit 128b6e956bb1332e6c5c98cab9b5c05bc6a868f5[m
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 10:09:41 2025 +0200
+
+    promena
+
+M	src/app/SidebarNav.tsx
+
+[33mcommit e47387b43ebc6f401acc1a94b77878d34de9f30f[m
+Merge: 3142e9b bd7cd0e
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 10:01:47 2025 +0200
+
+    Merge branch 'main' of https://github.com/ITSektor-00/HR-APP
+
+[33mcommit 3142e9bb55e09d48ea175f5a889eed7f3e7e9e0c[m
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 10:01:34 2025 +0200
+
+    dodate ikonice
+
+A	public/ikonice/intervjui.svg
+A	public/ikonice/prijave.svg
+M	src/app/SidebarNav.tsx
+
+[33mcommit bd7cd0e441b62017dfb057189aabf9edf87b3959[m
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 10:00:45 2025 +0200
+
+    sredjene ikonice
+
+M	src/app/SidebarNav.tsx
+
+[33mcommit 52cf32dbbf9172c74afe2179b3a139a766a7c578[m
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 09:56:28 2025 +0200
+
+    sredjene ikonice
+
+M	src/app/SidebarNav.tsx
+
+[33mcommit 6c1f5fc1c0c4dfc0b6953581680e3294ed7e447d[m
+Merge: f4b15e6 666d795
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 09:47:23 2025 +0200
+
+    kom
+
+[33mcommit f4b15e6f92d78ad0e4b6b9efa69fe9f00055d542[m
+Author: unknown <ivanadzabasan@gmail.com>
+Date:   Wed Jun 25 09:43:18 2025 +0200
+
+    komentar
+
+A	bun.lockb
+M	src/app/SidebarNav.tsx
+
+[33mcommit 666d795ba4f326c3f742523a23325e55488dcfe1[m
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Wed Jun 25 09:40:37 2025 +0200
+
+    dodate ikonice
+
+A	public/ikonice/dokumenti.svg
+A	public/ikonice/oglasiZaPosao.svg
+A	public/ikonice/prisustva.svg
+A	public/ikonice/ugovori.svg
+M	src/app/SidebarNav.tsx
+
+[33mcommit 18698023bf6b2ea4bbf3c1de3822d46627440c23[m
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Tue Jun 24 17:00:44 2025 +0200
+
+    ikonice dodate
+
+A	public/ikonice/beleske.svg
+A	public/ikonice/korisnici.svg
+M	src/app/SidebarNav.tsx
+
+[33mcommit b1e98da375071db2aae34059d4aa76543de58956[m
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Tue Jun 24 15:46:12 2025 +0200
+
+    prvi inicijalni test UI dizajna
+
+A	bun.lock
+M	package-lock.json
+M	package.json
+A	src/app/SidebarNav.tsx
+M	src/app/globals.css
+M	src/app/layout.tsx
+M	src/app/page.tsx
+A	tailwind.config.mjs
+
+[33mcommit fe57da5911157095a82e2f33663c0ffd8ab3c255[m
+Merge: d218584 9fd8188
+Author: LukaRakic00 <ltc.it.sektor@gmail.com>
+Date:   Tue Jun 24 15:17:30 2025 +0200
+
+    Resolve merge conflict: keep local README.md
+
+[33mcommit d218584fc004a3d40a73b195a8db7c0f8080f30e[m
+Author: LukaRakic00 <rakicluka00@gmail.com>
+Date:   Tue Jun 24 14:48:48 2025 +0200
+
+    Initial commit: HR-APP Next.js project
+
+A	.gitignore
+A	README.md
+A	eslint.config.mjs
+A	next.config.ts
+A	package-lock.json
+A	package.json
+A	postcss.config.mjs
+A	public/file.svg
+A	public/globe.svg
+A	public/next.svg
+A	public/vercel.svg
+A	public/window.svg
+A	src/app/favicon.ico
+A	src/app/globals.css
+A	src/app/layout.tsx
+A	src/app/page.tsx
+A	tsconfig.json
+
+[33mcommit 9fd8188db2f1b8163a5733bd905827171841ee2d[m
+Author: ITSektor-00 <ltc.it.sektor@gmail.com>
+Date:   Tue Jun 24 13:40:59 2025 +0200
+
+    Initial commit
+
+A	LICENSE
+A	README.md

@@ -71,7 +71,7 @@ export default function SidebarNav() {
     <div className="space-y-6">
       <div>
         <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 font-medium text-black">
-          <span className="w-5 h-5 bg-black/10 rounded" />
+          <img src="/ikonice/komandnaTabla.svg" alt="Komandna tabla" className="w-5 h-5" />
           Komandna tabla
         </Link>
       </div>
