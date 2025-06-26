@@ -107,3 +107,29 @@ html {
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
+
+.sidebar-active-link {
+  background: #fff;
+  color: #171717;
+  border-radius: 9999px 0 0 9999px;
+  font-weight: bold;
+}
+.dark .sidebar-active-link {
+  background: #23244d;
+  color: #fff;
+}
+
+/* Dugmad za otvaranje/zatvaranje sidebar-a */
+.group button,
+button[aria-label="Otvori meni"] {
+  color: #3A3CA6;
+}
+.dark .group button,
+.dark button[aria-label="Otvori meni"] {
+  color: #fff !important;
+}
+.dark .group button:hover,
+.dark button[aria-label="Otvori meni"]:hover {
+  background: #23244d !important;
+  color: #fff !important;
+}
