@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import SidebarNav from './SidebarNav'
 import Navbar from './Navbar'
+import { useThemeContext } from './ThemeContext'
 
 export default function ClientLayoutShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const { theme, mounted } = useThemeContext();
 
   // Slušaj custom event za otvaranje sidebar-a iz SidebarNav
   useEffect(() => {
@@ -16,8 +18,10 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
     return () => window.removeEventListener('openSidebar', handleOpenSidebar)
   }, [])
 
+  if (!mounted) return null;
+
   return (
-    <div className="h-screen w-full flex flex-col bg-[var(--main-bg)] overflow-x-hidden transition-all duration-300">
+    <div key={theme} className="h-screen w-full flex flex-col bg-[var(--main-bg)] overflow-x-hidden transition-all duration-300">
       {/* Navbar skroz gore */}
       <Navbar />
       {/* Flex kontejner za sidebar i main content */}
