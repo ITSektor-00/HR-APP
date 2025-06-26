@@ -87,10 +87,10 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
       {sections.map((section, idx) => (
         <div key={section.title} className="flex flex-col w-full mt-1.5">
           {!sidebarOpen && idx !== 0 && (
-            <div className="w-7 h-0.5 bg-[#e5e7eb] mx-auto my-1 rounded-full opacity-70" />
+            <div className="w-7 h-0.5 bg-[var(--border-color)] mx-auto my-1 rounded-full opacity-70" />
           )}
           {sidebarOpen && (
-            <div className="text-[14px] text-[#7c7e8c] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
+            <div className="text-[14px] text-[var(--text-secondary)] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
               {section.title}
             </div>
           )}
@@ -111,7 +111,7 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
       {/* Dugme za otvaranje sidebar-a na dnu liste, samo kada je zatvoren */}
       {!sidebarOpen && (
         <button
-          className="mt-4 mb-2 w-8 h-8 flex items-center justify-center rounded-full bg-[#e5e7eb] text-[#3A3CA6] hover:bg-[#3A3CA6] hover:text-white transition-colors duration-150 shadow border border-[#e5e7eb]"
+          className="mt-4 mb-2 w-8 h-8 flex items-center justify-center rounded-full bg-[var(--border-color)] text-[#3A3CA6] dark:text-white hover:bg-[#3A3CA6] hover:text-white transition-colors duration-150 shadow border border-[var(--border-color)]"
           style={{ outline: 'none' }}
           tabIndex={0}
           aria-label="Otvori meni"
@@ -156,8 +156,8 @@ function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string,
           href={href}
           scroll={false}
           className={`flex items-center justify-center w-full h-10 my-0.5 rounded-lg transition-colors duration-100
-            ${active ? 'bg-white text-black font-bold' : 'text-[#343741]'}
-            hover:bg-[#e5e7eb] focus:outline-none
+            ${active ? 'bg-white dark:bg-gray-800 text-black dark:text-white font-bold' : 'text-[var(--text-primary)]'}
+            hover:bg-[var(--border-color)] focus:outline-none
           `}
           tabIndex={0}
         >
@@ -166,7 +166,7 @@ function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string,
         {/* Tooltip koji se pojavljuje odmah na hover, fixed pozicija */}
         {tooltipPos && (
           <span
-            className="pointer-events-none fixed px-3 py-1.5 rounded-lg bg-[#e5e7eb] text-[#343741] text-[15px] font-semibold shadow-lg border border-[#e5e7eb] opacity-100 whitespace-nowrap z-50 select-none drop-shadow-md"
+            className="pointer-events-none fixed px-3 py-1.5 rounded-lg bg-[var(--border-color)] text-[var(--text-primary)] text-[15px] font-semibold shadow-lg border border-[var(--border-color)] opacity-100 whitespace-nowrap z-50 select-none drop-shadow-md"
             style={{
               top: tooltipPos.top,
               left: tooltipPos.left,
@@ -187,8 +187,8 @@ function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string,
       href={href}
       scroll={false}
       className={`flex items-center w-full px-0 py-1.5 transition-all duration-200 group relative overflow-hidden
-        ${active ? 'bg-white rounded-r-full font-bold text-black' : 'text-[#343741] font-normal'}
-        ${!active && 'hover:bg-[#f3f4f6]'}
+        ${active ? 'bg-white dark:bg-gray-800 rounded-r-full font-bold text-black dark:text-white' : 'text-[var(--text-primary)] font-normal'}
+        ${!active && 'hover:bg-[var(--sidebar-bg)]'}
         ${sidebarOpen ? 'pl-0 pr-4' : 'justify-center'}
         ${active && !sidebarOpen ? 'justify-center' : ''}
         focus:outline-none

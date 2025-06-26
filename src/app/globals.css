@@ -5,6 +5,29 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --navbar-bg: #3A3CA6;
+  --navbar-hover: #2e308c;
+  --sidebar-bg: #F3F4F6;
+  --main-bg: #f4f6fb;
+  --text-primary: #171717;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --scrollbar-thumb: #bfc4d6;
+  --scrollbar-track: #f4f6fb;
+}
+
+.dark {
+  --background: #0f0f23;
+  --foreground: #ffffff;
+  --navbar-bg: #1a1a2e;
+  --navbar-hover: #16213e;
+  --sidebar-bg: #16213e;
+  --main-bg: #0f0f23;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --border-color: #27272a;
+  --scrollbar-thumb: #3f3f46;
+  --scrollbar-track: #0f0f23;
 }
 
 @theme inline {
@@ -14,18 +37,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 html {
@@ -34,23 +51,23 @@ html {
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #bfc4d6 #f4f6fb;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 10px;
-  background: #f4f6fb;
+  background: var(--scrollbar-track);
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #bfc4d6;
+  background: var(--scrollbar-thumb);
   border-radius: 8px;
-  border: 2px solid #f4f6fb;
+  border: 2px solid var(--scrollbar-track);
   transition: background 0.2s;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #3A3CA6;
 }
 .custom-scrollbar::-webkit-scrollbar-corner {
-  background: #f4f6fb;
+  background: var(--scrollbar-track);
 }
 
 .glass-active-link {
@@ -60,6 +77,33 @@ html {
   box-shadow: 0 2px 12px 0 rgba(58,60,166,0.08), 0 1.5px 0 0 #e5e7eb;
 }
 
+.dark .glass-active-link {
+  background: rgba(255,255,255,0.1);
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.3), 0 1.5px 0 0 #27272a;
+}
+
 .text-shadow-glow {
   text-shadow: 0 1px 8px #3A3CA6, 0 0.5px 0 #fff;
+}
+
+.dark .text-shadow-glow {
+  text-shadow: 0 1px 8px #6366f1, 0 0.5px 0 #000;
+}
+
+/* Theme toggle button animations */
+.theme-toggle {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.05);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
