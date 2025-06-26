@@ -1,5 +1,6 @@
 import React from 'react'
 import { useTheme } from './useTheme'
+import Image from 'next/image'
 
 export default function Navbar() {
   const { theme, toggleTheme, mounted } = useTheme()
@@ -14,7 +15,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 h-12 bg-[var(--navbar-bg)] border-b border-[var(--border-color)] flex items-center px-2 sm:px-4 justify-between w-full shadow-sm transition-all duration-300">
       {/* Leva strana: logo i naziv */}
       <div className="flex items-center gap-2 select-none">
-        <img src="/ikonice/human-resources.svg" alt="HR Platforma" className="w-6 h-6 sm:w-7 sm:h-7" />
+        <Image src="/ikonice/human-resources.svg" alt="HR Platforma" width={28} height={28} className="w-6 h-6 sm:w-7 sm:h-7" priority />
         <span className="hidden sm:inline font-extrabold text-base sm:text-lg tracking-wide text-white" style={{fontFamily: 'InterVariable, sans-serif', letterSpacing: '0.04em'}}>HR Platforma</span>
       </div>
       {/* Sredina: search input, samo na lg+ */}

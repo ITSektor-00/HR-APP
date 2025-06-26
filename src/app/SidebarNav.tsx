@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
+import Image from 'next/image'
 
 interface NavLink {
   href: string
@@ -14,58 +15,58 @@ const sections = [
   {
     title: 'PRISUSTVO',
     links: [
-      { href: '/prisustvo/hronologija', label: 'Hronologija', icon: <img src="/ikonice/hronologija.svg" alt="Hronologija" className="w-4 h-4" /> },
-      { href: '/prisustvo/prisustva', label: 'Prisustva', icon: <img src="/ikonice/prisustva.svg" alt="Prisustva" className="w-4 h-4" /> },
-      { href: '/prisustvo/odsustva', label: 'Odsustva', icon: <img src="/ikonice/odsustva.svg" alt="Odsustva" className="w-4 h-4" /> },
-      { href: '/prisustvo/tokeni', label: 'Tokeni', icon: <img src="/ikonice/tokeni.svg" alt="Tokeni" className="w-4 h-4" /> },
+      { href: '/prisustvo/hronologija', label: 'Hronologija', icon: <Image src="/ikonice/hronologija.svg" alt="Hronologija" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/prisustvo/prisustva', label: 'Prisustva', icon: <Image src="/ikonice/prisustva.svg" alt="Prisustva" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/prisustvo/odsustva', label: 'Odsustva', icon: <Image src="/ikonice/odsustva.svg" alt="Odsustva" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/prisustvo/tokeni', label: 'Tokeni', icon: <Image src="/ikonice/tokeni.svg" alt="Tokeni" width={16} height={16} className="w-4 h-4" /> },
     ] as NavLink[],
   },
   {
     title: 'KORISNICI',
     links: [
-      { href: '/korisnici/korisnici', label: 'Korisnici', icon: <img src="/ikonice/korisnici.svg" alt="Korisnici" className="w-4 h-4" /> },
-      { href: '/korisnici/beleske', label: 'Beleške', icon: <img src="/ikonice/beleske.svg" alt="Beleške" className="w-4 h-4" /> },
+      { href: '/korisnici/korisnici', label: 'Korisnici', icon: <Image src="/ikonice/korisnici.svg" alt="Korisnici" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/korisnici/beleske', label: 'Beleške', icon: <Image src="/ikonice/beleske.svg" alt="Beleške" width={16} height={16} className="w-4 h-4" /> },
     ] as NavLink[],
   },
   {
     title: 'KANCELARIJA',
     links: [
-      { href: '/korisnici/ugovori', label: 'Ugovori', icon: <img src="/ikonice/ugovori.svg" alt="Ugovori" className="w-4 h-4" /> },
-      { href: '/korisnici/dokumenti', label: 'Dokumenti', icon: <img src="/ikonice/dokumenti.svg" alt="Dokumenti" className="w-4 h-4" /> },
+      { href: '/korisnici/ugovori', label: 'Ugovori', icon: <Image src="/ikonice/ugovori.svg" alt="Ugovori" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/korisnici/dokumenti', label: 'Dokumenti', icon: <Image src="/ikonice/dokumenti.svg" alt="Dokumenti" width={16} height={16} className="w-4 h-4" /> },
     ] as NavLink[],
   },
   {
     title: 'ZAPOSLENJE',
     links: [
-      { href: '/korisnici/oglasiZaPosao', label: 'Oglasi za posao', icon: <img src="/ikonice/oglasiZaPosao.svg" alt="Oglasi za posao" className="w-4 h-4" /> },
-      { href: '/zaposlenje/prijave', label: 'Prijave', icon: <img src="/ikonice/prijave.svg" alt="Prijave" className="w-4 h-4" /> },
-      { href: '/zaposlenje/intervjui', label: 'Intervjui', icon: <img src="/ikonice/intervjui.svg" alt="Intervjui" className="w-4 h-4" /> },
+      { href: '/korisnici/oglasiZaPosao', label: 'Oglasi za posao', icon: <Image src="/ikonice/oglasiZaPosao.svg" alt="Oglasi za posao" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/zaposlenje/prijave', label: 'Prijave', icon: <Image src="/ikonice/prijave.svg" alt="Prijave" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/zaposlenje/intervjui', label: 'Intervjui', icon: <Image src="/ikonice/intervjui.svg" alt="Intervjui" width={16} height={16} className="w-4 h-4" /> },
     ] as NavLink[],
   },
   {
     title: 'SERTIFIKATI',
     links: [
-      { href: '/sertifikati/sertifikati', label: 'Sertifikati', icon: <img src="/ikonice/sertifikati.svg" alt="Sertifikati" className="w-4 h-4" /> },
-      { href: '/sertifikati/institucije', label: 'Institucije sertifikata', icon: <img src="/ikonice/institucije.svg" alt="Institucije sertifikata" className="w-4 h-4" /> },
-      { href: '/sertifikati/vrsteSertifikati', label: 'Vrste sertifikata', icon: <img src="/ikonice/vrsteSertifikati.svg" alt="Vrste sertifikata" className="w-4 h-4" /> },
+      { href: '/sertifikati/sertifikati', label: 'Sertifikati', icon: <Image src="/ikonice/sertifikati.svg" alt="Sertifikati" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/sertifikati/institucije', label: 'Institucije sertifikata', icon: <Image src="/ikonice/institucije.svg" alt="Institucije sertifikata" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/sertifikati/vrsteSertifikati', label: 'Vrste sertifikata', icon: <Image src="/ikonice/vrsteSertifikati.svg" alt="Vrste sertifikata" width={16} height={16} className="w-4 h-4" /> },
     ] as NavLink[],
   },
   {
     title: 'VOZILA',
     links: [
-      { href: '/vozila/vozila', label: 'Vozila', icon: <img src="/ikonice/vozila.svg" alt="Vozila" className="w-4 h-4" /> },
-      { href: '/vozila/registracijeVozila', label: 'Registracije vozila', icon: <img src="/ikonice/registracijeVozila.svg" alt="Registracije vozila" className="w-4 h-4" /> },
+      { href: '/vozila/vozila', label: 'Vozila', icon: <Image src="/ikonice/vozila.svg" alt="Vozila" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/vozila/registracijeVozila', label: 'Registracije vozila', icon: <Image src="/ikonice/registracijeVozila.svg" alt="Registracije vozila" width={16} height={16} className="w-4 h-4" /> },
     ] as NavLink[],
   },
   {
     title: 'KOMPANIJA',
     links: [
-      { href: '/kompanija/podesavanja', label: 'Podešavanja', icon: <img src="/ikonice/podesavanja.svg" alt="Podešavanja" className="w-4 h-4" /> },
-      { href: '/kompanija/uloge', label: 'Uloge', icon: <img src="/ikonice/uloge.svg" alt="Uloge" className="w-4 h-4" /> },
-      { href: '/kompanija/pozicije', label: 'Pozicije', icon: <img src="/ikonice/pozicije.svg" alt="Pozicije" className="w-4 h-4" /> },
-      { href: '/kompanija/lokacije', label: 'Lokacije', icon: <img src="/ikonice/lokacije.svg" alt="Lokacije" className="w-4 h-4" /> },
-      { href: '/kompanija/sektori', label: 'Sektori', icon: <img src="/ikonice/sektori.svg" alt="Sektori" className="w-4 h-4" /> },
-      { href: '/kompanija/org-shema', label: 'Organizaciona šema', icon: <img src="/ikonice/org-shema.svg" alt="Organizaciona šema" className="w-4 h-4" /> },
+      { href: '/kompanija/podesavanja', label: 'Podešavanja', icon: <Image src="/ikonice/podesavanja.svg" alt="Podešavanja" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/kompanija/uloge', label: 'Uloge', icon: <Image src="/ikonice/uloge.svg" alt="Uloge" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/kompanija/pozicije', label: 'Pozicije', icon: <Image src="/ikonice/pozicije.svg" alt="Pozicije" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/kompanija/lokacije', label: 'Lokacije', icon: <Image src="/ikonice/lokacije.svg" alt="Lokacije" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/kompanija/sektori', label: 'Sektori', icon: <Image src="/ikonice/sektori.svg" alt="Sektori" width={16} height={16} className="w-4 h-4" /> },
+      { href: '/kompanija/org-shema', label: 'Organizaciona šema', icon: <Image src="/ikonice/org-shema.svg" alt="Organizaciona šema" width={16} height={16} className="w-4 h-4" /> },
     ] as NavLink[],
   },
 ]
@@ -78,7 +79,7 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
       <div className="flex flex-col w-full">
         <SidebarItem
           href="/"
-          icon={<img src="/ikonice/komandnaTabla.svg" alt="Komandna tabla" className="w-4 h-4" />}
+          icon={<Image src="/ikonice/komandnaTabla.svg" alt="Komandna tabla" width={16} height={16} className="w-4 h-4" />}
           label="Komandna tabla"
           active={pathname === '/'}
           sidebarOpen={sidebarOpen}
@@ -187,7 +188,7 @@ function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string,
       href={href}
       scroll={false}
       className={`flex items-center w-full px-0 py-1.5 transition-all duration-200 group relative overflow-hidden
-        ${active ? 'bg-white dark:bg-gray-800 rounded-r-full font-bold text-black dark:text-white' : 'text-[var(--text-primary)] font-normal'}
+        ${active ? 'sidebar-active-link' : 'text-[var(--text-primary)] font-normal'}
         ${!active && 'hover:bg-[var(--sidebar-bg)]'}
         ${sidebarOpen ? 'pl-0 pr-4' : 'justify-center'}
         ${active && !sidebarOpen ? 'justify-center' : ''}

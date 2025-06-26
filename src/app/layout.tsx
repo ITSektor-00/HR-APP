@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import type { Metadata } from "next";
 import ClientLayoutShell from "./ClientLayoutShell";
+import ClientThemeProvider from "./ClientThemeProvider";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -21,7 +22,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="sr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--background)] font-sans`}>
-        <ClientLayoutShell>{children}</ClientLayoutShell>
+        <ClientThemeProvider>
+          <ClientLayoutShell>{children}</ClientLayoutShell>
+        </ClientThemeProvider>
       </body>
     </html>
   );
