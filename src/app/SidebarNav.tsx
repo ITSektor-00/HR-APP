@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import DynamicIcon from './components/DynamicIcon'
+import { useThemeContext } from './ThemeContext'
 
 interface NavLink {
   href: string
@@ -73,6 +74,7 @@ const sections = [
 
 export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   const pathname = usePathname()
+  const { theme } = useThemeContext();
 
   return (
     <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'} overflow-x-hidden`}>
@@ -83,6 +85,7 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
           label="Komandna tabla"
           active={pathname === '/'}
           sidebarOpen={sidebarOpen}
+          theme={theme}
         />
       </div>
       {sections.map((section, idx) => (
@@ -104,85 +107,34 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
                 label={link.label}
                 active={pathname === link.href}
                 sidebarOpen={sidebarOpen}
+                theme={theme}
               />
             ))}
           </div>
         </div>
       ))}
-      {/* Dugme za otvaranje sidebar-a na dnu liste, samo kada je zatvoren */}
-      {!sidebarOpen && (
-        <button
-          className="mt-4 mb-2 w-8 h-8 flex items-center justify-center rounded-full bg-[var(--border-color)] text-[#3A3CA6] dark:text-white hover:bg-[#3A3CA6] hover:text-white transition-colors duration-150 shadow border border-[var(--border-color)]"
-          style={{ outline: 'none' }}
-          tabIndex={0}
-          aria-label="Otvori meni"
-          onClick={() => {
-            // Custom event za otvaranje sidebar-a, biće uhvaćen u parentu
-            const event = new CustomEvent('openSidebar', { bubbles: true })
-            window.dispatchEvent(event)
-          }}
-        >
-          <span className="text-xl">»</span>
-        </button>
-      )}
     </nav>
   )
 }
 
-function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string, icon?: React.ReactElement, label: string, active: boolean, sidebarOpen: boolean }) {
-  const iconRef = React.useRef<HTMLSpanElement>(null);
-  const [tooltipPos, setTooltipPos] = React.useState<{top: number, left: number} | null>(null);
-
-  // On hover, set tooltip position
-  function handleMouseEnter() {
-    if (iconRef.current) {
-      const rect = iconRef.current.getBoundingClientRect();
-      setTooltipPos({
-        top: rect.top + rect.height / 2,
-        left: rect.right + 8,
-      });
-    }
-  }
-  function handleMouseLeave() {
-    setTooltipPos(null);
-  }
-
+function SidebarItem({ href, icon, label, active, sidebarOpen, theme }: { href: string, icon?: React.ReactElement, label: string, active: boolean, sidebarOpen: boolean, theme: string }) {
   if (!sidebarOpen) {
     return (
-      <div className="relative flex items-center justify-center w-full"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
+      <div className="relative flex items-center justify-center w-full">
         <Link
           href={href}
           scroll={false}
           className={`flex items-center justify-center w-full h-10 my-0.5 rounded-lg transition-colors duration-100
-            ${active ? 'bg-white dark:bg-gray-800 text-black dark:text-white font-bold' : 'text-[var(--text-primary)]'}
+            ${active ? (theme === 'dark' ? 'bg-gray-800 text-white font-bold' : 'bg-gray-200 text-black font-bold border border-gray-400') : 'text-[var(--text-primary)]'}
             hover:bg-[var(--border-color)] focus:outline-none
           `}
           tabIndex={0}
         >
-          <span ref={iconRef} className={`w-5 h-5 flex items-center justify-center ${active ? 'font-bold' : ''}`}>{icon}</span>
+          <span className={`w-5 h-5 flex items-center justify-center ${active ? 'font-bold' : ''}`}>{icon}</span>
         </Link>
-        {/* Tooltip koji se pojavljuje odmah na hover, fixed pozicija */}
-        {tooltipPos && (
-          <span
-            className="pointer-events-none fixed px-3 py-1.5 rounded-lg bg-[var(--border-color)] text-[var(--text-primary)] text-[15px] font-semibold shadow-lg border border-[var(--border-color)] opacity-100 whitespace-nowrap z-50 select-none drop-shadow-md"
-            style={{
-              top: tooltipPos.top,
-              left: tooltipPos.left,
-              transform: 'translateY(-50%)',
-              minWidth: 80,
-            }}
-          >
-            {label}
-          </span>
-        )}
       </div>
     )
   }
-  
-  // Otvoreni sidebar - stara logika
   return (
     <Link
       href={href}
@@ -195,8 +147,7 @@ function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string,
         focus:outline-none
       `}
       title={label}
-      style={{fontSize: 13, minHeight: 32, maxWidth: sidebarOpen ? 220 : 48, overflow: 'hidden'}}
-    >
+      style={{fontSize: 13, minHeight: 32, maxWidth: sidebarOpen ? 220 : 48, overflow: 'hidden'}}>
       <span className={`w-4 h-4 flex items-center justify-center z-10 ${active ? 'font-bold' : ''}`}>{icon}</span>
       {sidebarOpen && (
         <span className={`truncate z-10 ${active ? 'font-bold' : 'font-normal'} hover:underline`} style={{maxWidth: 120, marginLeft: 8}}>{label}</span>
