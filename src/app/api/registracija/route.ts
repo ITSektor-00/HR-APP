@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 dana
     });
     return response;
-  } catch (err: any) {
-    if (err.code === '23505') {
+  } catch (err: unknown) {
+    if (typeof err === "object" && err && "code" in err && (err as any).code === "23505") {
       return NextResponse.json({ error: 'Email je već registrovan.' }, { status: 409 });
     }
     return NextResponse.json({ error: 'Greška na serveru.' }, { status: 500 });

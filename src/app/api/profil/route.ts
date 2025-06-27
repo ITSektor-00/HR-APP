@@ -40,7 +40,7 @@ export async function PUT(req: NextRequest) {
     const { ime, prezime, email, telefon, lozinka, slika } = data;
 
     let query = 'UPDATE korisnici SET ime = $1, prezime = $2, email = $3, telefon = $4';
-    const params: any[] = [ime, prezime, email, telefon];
+    const params: (string | number | null)[] = [ime, prezime, email, telefon];
     let idx = 5;
 
     if (slika !== undefined) {
