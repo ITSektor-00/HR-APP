@@ -9,6 +9,15 @@ const pool = new Pool({
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tajna';
 
+function isPgError(err: unknown): err is { code: string } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    typeof (err as { code?: unknown }).code === "string"
+  );
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { ime, prezime, email, lozinka, telefon } = await req.json();
@@ -32,7 +41,7 @@ export async function POST(req: NextRequest) {
     });
     return response;
   } catch (err: unknown) {
-    if (typeof err === "object" && err && "code" in err && (err as any).code === "23505") {
+    if (isPgError(err) && err.code === "23505") {
       return NextResponse.json({ error: 'Email je već registrovan.' }, { status: 409 });
     }
     return NextResponse.json({ error: 'Greška na serveru.' }, { status: 500 });
