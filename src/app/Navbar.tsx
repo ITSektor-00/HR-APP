@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { useThemeContext } from './ThemeContext'
 import DynamicIcon from './components/DynamicIcon'
+import Image from "next/image"
+
+type User = {
+  id: number;
+  ime: string;
+  prezime: string;
+  email: string;
+  telefon?: string;
+  slika?: string;
+  // dodaj ostala polja iz baze ako ih imaš
+};
 
 export default function Navbar() {
   const { theme, toggleTheme, mounted } = useThemeContext()
   const [profilOpen, setProfilOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined' && (window.location.pathname === '/prijava' || window.location.pathname === '/registracija')) return;
@@ -120,16 +131,32 @@ export default function Navbar() {
               onClick={() => setProfilOpen(v => !v)}
             >
               {user.slika ? (
-                <img src={user.slika} alt="Profil" className="w-9 h-9 rounded-full object-cover" />
+                <Image
+                  src={user.slika}
+                  alt="Profil"
+                  width={56}
+                  height={56}
+                  className="w-14 h-14 rounded-full object-cover"
+                  priority
+                />
               ) : (
-                <span>{user.ime?.[0]}{user.prezime?.[0]}</span>
+                <div className="w-14 h-14 rounded-full bg-primary-200 flex items-center justify-center text-2xl font-bold text-primary-900">
+                  {user.ime?.[0]}{user.prezime?.[0]}
+                </div>
               )}
             </button>
             {profilOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white shadow-xl rounded-xl p-4 z-50 border border-gray-200">
                 <div className="flex items-center gap-3 mb-3">
                   {user.slika ? (
-                    <img src={user.slika} alt="Profil" className="w-14 h-14 rounded-full object-cover" />
+                    <Image
+                      src={user.slika}
+                      alt="Profil"
+                      width={56}
+                      height={56}
+                      className="w-14 h-14 rounded-full object-cover"
+                      priority
+                    />
                   ) : (
                     <div className="w-14 h-14 rounded-full bg-primary-200 flex items-center justify-center text-2xl font-bold text-primary-900">
                       {user.ime?.[0]}{user.prezime?.[0]}
@@ -171,13 +198,13 @@ export default function Navbar() {
 }
 
 // Modal za izmenu profila
-function ProfileModal({ user, onClose, onSave }: { user: any, onClose: () => void, onSave: (u: any) => void }) {
-  const [ime, setIme] = useState(user.ime || "")
-  const [prezime, setPrezime] = useState(user.prezime || "")
-  const [email, setEmail] = useState(user.email || "")
-  const [telefon, setTelefon] = useState(user.telefon || "")
+function ProfileModal({ user, onClose, onSave }: { user: User | null, onClose: () => void, onSave: (u: User | null) => void }) {
+  const [ime, setIme] = useState(user?.ime || "")
+  const [prezime, setPrezime] = useState(user?.prezime || "")
+  const [email, setEmail] = useState(user?.email || "")
+  const [telefon, setTelefon] = useState(user?.telefon || "")
   const [lozinka, setLozinka] = useState("")
-  const [slika, setSlika] = useState(user.slika || "")
+  const [slika, setSlika] = useState(user?.slika || "")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -227,7 +254,14 @@ function ProfileModal({ user, onClose, onSave }: { user: any, onClose: () => voi
             <label className="block font-semibold mb-1 text-gray-900 dark:text-white">Fotografija</label>
             <div className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition border-gray-200 dark:border-gray-700" onClick={() => document.getElementById('file-upload')?.click()}>
               {slika ? (
-                <img src={slika} alt="Profil" className="w-24 h-24 rounded-full object-cover mb-2" />
+                <Image
+                  src={slika}
+                  alt="Profil"
+                  width={24}
+                  height={24}
+                  className="w-24 h-24 rounded-full object-cover mb-2"
+                  priority
+                />
               ) : (
                 <span className="text-gray-400 dark:text-gray-500">Izaberite ili prevucite datoteku</span>
               )}

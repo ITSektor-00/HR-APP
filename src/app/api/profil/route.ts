@@ -21,11 +21,15 @@ function getUserIdFromRequest(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const userId = getUserIdFromRequest(req);
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const result = await pool.query('SELECT id, ime, prezime, email, telefon, slika FROM korisnici WHERE id = $1', [userId]);
-  if (result.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(result.rows[0]);
+  try {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const result = await pool.query('SELECT id, ime, prezime, email, telefon, slika FROM korisnici WHERE id = $1', [userId]);
+    if (result.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json(result.rows[0]);
+  } catch {
+    return NextResponse.json({ error: "Došlo je do greške." }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
@@ -53,7 +57,7 @@ export async function PUT(req: NextRequest) {
 
     const result = await pool.query(query, params);
     return NextResponse.json(result.rows[0]);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Greška na serveru.' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Došlo je do greške." }, { status: 500 });
   }
 } 

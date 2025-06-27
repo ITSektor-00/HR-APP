@@ -4,14 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 
 export default function PrijavaPage() {
   const [email, setEmail] = useState("");
   const [lozinka, setLozinka] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
   const [theme, setTheme] = useState<string>("light");
 
   useEffect(() => {

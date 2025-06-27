@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 dana
     });
     return response;
-  } catch (err) {
-    return NextResponse.json({ error: 'Greška na serveru.' }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Došlo je do greške.' }, { status: 500 });
   }
 } 
