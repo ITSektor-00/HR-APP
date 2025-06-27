@@ -37,6 +37,7 @@ export default function KorisniciDokumenti() {
     datumPisanja: new Date().toISOString().slice(0, 10),
     datumPotpisa: new Date().toISOString().slice(0, 10),
   });
+  const [stavke, setStavke] = useState<{ zaposleni: string; nekorisceni: string; korisceni: string }[]>([]);
 
   // Helperi za prikaz datuma u srpskom formatu
   function formatDatum(d: string) {
@@ -92,18 +93,22 @@ export default function KorisniciDokumenti() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="border border-gray-400 px-4 py-2">1</td>
-                    <td className="border border-gray-400 px-4 py-2">&nbsp;</td>
-                    <td className="border border-gray-400 px-4 py-2">&nbsp;</td>
-                    <td className="border border-gray-400 px-4 py-2">&nbsp;</td>
-                  </tr>
-                  <tr>
-                    <td className="border border-gray-400 px-4 py-2">2</td>
-                    <td className="border border-gray-400 px-4 py-2">&nbsp;</td>
-                    <td className="border border-gray-400 px-4 py-2">&nbsp;</td>
-                    <td className="border border-gray-400 px-4 py-2">&nbsp;</td>
-                  </tr>
+                  {stavke.length === 0 ? (
+                    <tr>
+                      <td className="border border-gray-400 px-4 py-2" colSpan={4}>
+                        Nema unetih stavki.
+                      </td>
+                    </tr>
+                  ) : (
+                    stavke.map((s, i) => (
+                      <tr key={i}>
+                        <td className="border border-gray-400 px-4 py-2">{i + 1}</td>
+                        <td className="border border-gray-400 px-4 py-2">{s.zaposleni}</td>
+                        <td className="border border-gray-400 px-4 py-2">{s.nekorisceni}</td>
+                        <td className="border border-gray-400 px-4 py-2">{s.korisceni}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -126,6 +131,7 @@ export default function KorisniciDokumenti() {
           onClose={() => setShowPolja(false)}
           values={polja}
           onChange={setPolja}
+          onAddStavka={stavka => setStavke(stare => [...stare, stavka])}
         />
       </div>
     );
