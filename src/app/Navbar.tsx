@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useThemeContext } from './ThemeContext'
 import DynamicIcon from './components/DynamicIcon'
 import Image from "next/image"
+import Link from "next/link"
 
 type User = {
   id: number;
@@ -35,15 +36,17 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 h-12 bg-[var(--navbar-bg)] border-b border-[var(--border-color)] flex items-center px-2 sm:px-4 justify-between w-full shadow-sm transition-all duration-300">
       {/* Leva strana: logo i naziv */}
       <div className="flex items-center gap-2 select-none">
-        <DynamicIcon 
-          iconName="human-resources" 
-          alt="HR Platforma" 
-          width={28} 
-          height={28} 
-          className="w-6 h-6 sm:w-7 sm:h-7" 
-          priority 
-        />
-        <span className="hidden sm:inline font-extrabold text-base sm:text-lg tracking-wide text-white" style={{fontFamily: 'InterVariable, sans-serif', letterSpacing: '0.04em'}}>HR Platforma</span>
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200">
+          <DynamicIcon 
+            iconName="human-resources" 
+            alt="HR Platforma" 
+            width={28} 
+            height={28} 
+            className="w-6 h-6 sm:w-7 sm:h-7" 
+            priority 
+          />
+          <span className="hidden sm:inline font-extrabold text-base sm:text-lg tracking-wide text-white" style={{fontFamily: 'InterVariable, sans-serif', letterSpacing: '0.04em'}}>HR Platforma</span>
+        </Link>
       </div>
       {/* Sredina: search input, samo na lg+ */}
       <div className="hidden lg:flex flex-1 justify-center px-4">
