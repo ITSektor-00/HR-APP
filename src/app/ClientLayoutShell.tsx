@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState } from 'react'
 import SidebarNav from './SidebarNav'
@@ -8,12 +8,23 @@ import { useThemeContext } from './ThemeContext'
 export default function ClientLayoutShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [hovering, setHovering] = useState(false)
-  const { theme, mounted } = useThemeContext();
+  const { theme, mounted } = useThemeContext()
 
-  if (!mounted) return null;
+  if (!mounted) return null
+
+  // Proveri da li je auth ruta
+  let isAuthRoute = false
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname
+    isAuthRoute = path === '/prijava' || path === '/registracija'
+  }
+
+  if (isAuthRoute) {
+    return <div className="min-h-screen w-full flex items-center justify-center bg-[var(--main-bg)]">{children}</div>
+  }
 
   // Sidebar je otvoren ako je kliknuto ili ako je hoverovan dok je zatvoren
-  const isSidebarOpen = sidebarOpen || hovering;
+  const isSidebarOpen = sidebarOpen || hovering
 
   return (
     <div key={theme} className="h-screen w-full flex flex-col bg-[var(--main-bg)] overflow-x-hidden transition-all duration-300">
