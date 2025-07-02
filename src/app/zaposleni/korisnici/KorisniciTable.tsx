@@ -111,7 +111,30 @@ const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, v
                       case 'datum_pocetka': return <td key={col.key} className="p-2">{k.datum_pocetka}</td>;
                       case 'uloga': return <td key={col.key} className="p-2">{k.uloga}</td>;
                       case 'korisnik':
-                        return <td key={col.key} className="p-2 flex items-center gap-2">{k.fotografija ? (<Image src={k.fotografija} alt="avatar" className="w-8 h-8 rounded-full object-cover" width={32} height={32} />) : (<span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gray-300`}>{(k.ime?.[0] || '') + (k.prezime?.[0] || '')}</span>)}{k.ime} {k.prezime}</td>;
+                        return (
+                          <td key={col.key} className="p-2 flex items-center gap-2">
+                            {k.fotografija ? (
+                              <Image
+                                src={
+                                  k.fotografija.startsWith('http')
+                                    ? k.fotografija
+                                    : k.fotografija.startsWith('/')
+                                      ? k.fotografija
+                                      : '/' + k.fotografija
+                                }
+                                alt="avatar"
+                                className="w-8 h-8 rounded-full object-cover"
+                                width={32}
+                                height={32}
+                              />
+                            ) : (
+                              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gray-300`}>
+                                {(k.ime?.[0] || '') + (k.prezime?.[0] || '')}
+                              </span>
+                            )}
+                            {k.ime} {k.prezime}
+                          </td>
+                        );
                       case 'datum_zavrsetka': return <td key={col.key} className="p-2">{k.datum_zavrsetka}</td>;
                       case 'status_zaposlenja': return <td key={col.key} className="p-2">{k.status_zaposlenja}</td>;
                       case 'vrsta_zaposlenja': return <td key={col.key} className="p-2">{k.vrsta_zaposlenja}</td>;

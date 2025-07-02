@@ -106,6 +106,26 @@ const DateTimeKorSVG = () => (
   </svg>
 );
 
+// Add Cloudinary upload helper
+async function uploadToCloudinary(file: File): Promise<string | null> {
+  const url = `https://api.cloudinary.com/v1_1/dpprqbwvp/image/upload`;
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'unsigned-hr-app'); // You must create this unsigned preset in your Cloudinary dashboard
+  formData.append('folder', 'HR_APLIKACIJA');
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await res.json();
+    if (data.secure_url) return data.secure_url;
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [activeTab, setActiveTab] = useState("licni");
@@ -209,12 +229,16 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
     }
   };
 
-  const handleSlika = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSlika = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Show preview immediately
     const reader = new FileReader();
     reader.onload = (ev) => setSlika(ev.target?.result as string);
     reader.readAsDataURL(file);
+    // Upload to Cloudinary
+    const url = await uploadToCloudinary(file);
+    if (url) setSlika(url);
   };
 
   return (
