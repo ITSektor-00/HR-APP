@@ -121,7 +121,7 @@ async function uploadToCloudinary(file: File): Promise<string | null> {
     const data = await res.json();
     if (data.secure_url) return data.secure_url;
     return null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
