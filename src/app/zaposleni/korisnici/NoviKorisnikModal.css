@@ -1,0 +1,11 @@
+/* Razmak između selektora meseca i godine u React DatePicker-u */
+.react-datepicker__current-month,
+.react-datepicker__month-dropdown-container,
+.react-datepicker__year-dropdown-container {
+  margin-right: 8px;
+}
+
+.react-datepicker__month-dropdown-container,
+.react-datepicker__year-dropdown-container {
+  margin-left: 8px;
+} 

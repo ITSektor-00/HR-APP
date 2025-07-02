@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SidebarNav from './SidebarNav'
 import Navbar from './Navbar'
 import { useThemeContext } from './ThemeContext'
@@ -9,6 +9,40 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [hovering, setHovering] = useState(false)
   const { theme, mounted } = useThemeContext()
+
+  // Event listener za hamburger dugme na mobilnim uređajima
+  useEffect(() => {
+    const handleOpenSidebar = () => {
+      setSidebarOpen(true)
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const sidebar = document.querySelector('aside')
+      if (sidebar && !sidebar.contains(event.target as Node) && sidebarOpen && window.innerWidth < 1024) {
+        setSidebarOpen(false)
+      }
+    }
+
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(false)
+        setHovering(false)
+      } else if (window.innerWidth < 640) {
+        setSidebarOpen(false)
+        setHovering(false)
+      }
+    }
+
+    window.addEventListener('openSidebar', handleOpenSidebar)
+    document.addEventListener('mousedown', handleClickOutside)
+    window.addEventListener('resize', handleResize)
+    
+    return () => {
+      window.removeEventListener('openSidebar', handleOpenSidebar)
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [sidebarOpen])
 
   if (!mounted) return null
 
@@ -34,10 +68,10 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
       <div className="flex flex-1 min-h-0 overflow-x-hidden">
         {/* Sidebar */}
         <aside
-          className={`group sticky top-0 h-[calc(100vh-64px)] bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 z-20 ${isSidebarOpen ? 'w-64' : 'w-12'} px-2 py-4 overflow-y-auto custom-scrollbar pr-3 overflow-x-hidden`}
+          className={`group sticky top-0 h-[calc(100vh-48px)] bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 z-20 ${isSidebarOpen ? 'w-64' : 'w-12'} px-2 py-4 overflow-y-auto custom-scrollbar pr-3 overflow-x-hidden lg:block hidden sm:flex sm:relative ${sidebarOpen ? 'sm:fixed sm:left-0 sm:top-12' : ''}`}
           style={{ transitionProperty: 'width,background-color,border-color' }}
-          onMouseEnter={() => { if (!sidebarOpen) setHovering(true) }}
-          onMouseLeave={() => { if (!sidebarOpen) setHovering(false) }}
+          onMouseEnter={() => { if (!sidebarOpen && window.innerWidth >= 1024) setHovering(true) }}
+          onMouseLeave={() => { if (!sidebarOpen && window.innerWidth >= 1024) setHovering(false) }}
         >
           {/* Dugme za zatvaranje - prikazuje se samo kada je sidebar otvoren klikom */}
           {sidebarOpen && (
@@ -55,8 +89,15 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
             <SidebarNav sidebarOpen={isSidebarOpen} />
           </div>
         </aside>
+        {/* Overlay za mobilne uređaje */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
         {/* Main content */}
-        <main className="flex-1 p-6 bg-[var(--main-bg)] min-h-0 transition-all duration-300">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 bg-[var(--main-bg)] min-h-0 transition-all duration-300 overflow-x-hidden w-full">{children}</main>
       </div>
     </div>
   )

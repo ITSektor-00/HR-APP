@@ -55,7 +55,6 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
         setShowCustomLokacija(Boolean(v.lokacija && !lokacije.includes(v.lokacija)));
       }
     }
-    // eslint-disable-next-line
   }, [open, values, docType]);
 
   // Kada se forma zatvori, pošalji promene parentu

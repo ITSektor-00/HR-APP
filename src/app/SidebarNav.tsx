@@ -25,7 +25,7 @@ const sections = [
   {
     title: 'KORISNICI',
     links: [
-      { href: '/korisnici/korisnici', label: 'Korisnici', icon: <DynamicIcon iconName="korisnici" alt="Korisnici" /> },
+      { href: '/zaposleni/korisnici', label: 'Korisnici', icon: <DynamicIcon iconName="korisnici" alt="Korisnici" /> },
       { href: '/korisnici/beleske', label: 'Beleške', icon: <DynamicIcon iconName="beleske" alt="Beleške" /> },
     ] as NavLink[],
   },
