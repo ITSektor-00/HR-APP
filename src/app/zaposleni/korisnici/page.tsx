@@ -6,6 +6,7 @@ import NoviKorisnikModal from './NoviKorisnikModal';
 import ExportModal from './ExportModal';
 import ColumnsMenu from './ColumnsMenu';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 
 interface Korisnik {
   id: number;
@@ -79,6 +80,9 @@ export default function KorisniciPage() {
   const [columnsOpen, setColumnsOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(ALL_COLUMNS);
   const [citacLoading, setCitacLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetchKorisnici();
@@ -131,8 +135,8 @@ export default function KorisniciPage() {
       id: 'Identifikator', pristup: 'Pristup', datum_pocetka: 'Datum početka zaposlenja', uloga: 'Uloga', korisnik: 'Korisnik', datum_zavrsetka: 'Datum završetka zaposlenja', status_zaposlenja: 'Status zaposlenja', vrsta_zaposlenja: 'Vrsta zaposlenja', pozicija: 'Pozicija', sektor: 'Sektor', broj_radne_dozvole: 'Broj radne dozvole', datum_kreiranja: 'Datum kreiranja', datum_azuriranja: 'Datum ažuriranja'
     };
     const header = columns.map(col => headerLabels[col] || col);
-    const csv = [header, ...rows].map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(',')).join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = '\uFEFF' + [header, ...rows].map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -157,6 +161,27 @@ export default function KorisniciPage() {
     setTimeout(() => setCitacLoading(false), 1000);
   };
 
+  const paginatedKorisnici = korisnici.slice((page-1)*rowsPerPage, page*rowsPerPage);
+  const totalPages = Math.ceil(korisnici.length / rowsPerPage);
+
+  const handleSelect = (id: number, checked: boolean) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(x => x !== id));
+  };
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(paginatedKorisnici.map(k => k.id));
+    } else {
+      setSelectedIds(prev => prev.filter(id => !paginatedKorisnici.some(k => k.id === id)));
+    }
+  };
+  const handleDelete = async () => {
+    for (const id of selectedIds) {
+      await fetch(`/api/zaposleni/korisnici?id=${id}`, { method: 'DELETE' });
+    }
+    setSelectedIds([]);
+    fetchKorisnici();
+  };
+
   return (
     <div className="p-8 w-full h-full">
       {toast && (
@@ -168,15 +193,16 @@ export default function KorisniciPage() {
       {/* Header sa naslovom i čitačem */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: '#3A3CA6'}}>
-            <Image src="/ikonice/beleIkonice/korisniciBelo.svg" alt="Korisnici" width={24} height={24} />
+          <div className="w-10 h-10 md:w-16 md:h-16 rounded-lg flex items-center justify-center" style={{backgroundColor: '#3A3CA6'}}>
+            <Image src="/ikonice/beleIkonice/korisniciBelo.svg" alt="Korisnici" width={40} height={40} />
           </div>
-          <h1 className="text-2xl font-bold">Korisnici</h1>
+          <h1 className="text-4xl font-bold ml-2">Korisnici</h1>
         </div>
         <Button 
           onClick={handleDownloadCitac} 
           variant="outline" 
-          className="flex items-center gap-2 hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none w-full sm:w-auto"
+          className="flex items-center gap-2 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none w-full sm:w-auto"
+          style={{ backgroundColor: '#D8D8ED' }}
           disabled={citacLoading}
           title="Preuzmite aplikaciju za čitanje ličnih kartica"
         >
@@ -186,7 +212,9 @@ export default function KorisniciPage() {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           ) : (
-            <Image src="/korisnici/upload-file.svg" alt="Upload" width={16} height={16} />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           )}
           {citacLoading ? 'Preuzimanje...' : 'Preuzmite Čitač lične karte'}
         </Button>
@@ -196,9 +224,15 @@ export default function KorisniciPage() {
       <div className="bg-white rounded-xl shadow p-4 sm:p-6">
         {/* Naslov tabele i kontrole */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-          <h2 className="text-lg font-semibold">Tabela</h2>
+          <h2 className="text-2xl font-semibold">Tabela</h2>
           <div className="flex flex-wrap items-center gap-2 justify-end">
-            <Button onClick={() => setModalOpen(true)} variant="default" className="font-semibold bg-[#3A3CA6] hover:bg-blue-700 active:bg-blue-800 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            {selectedIds.length > 0 && (
+              <Button variant="destructive" onClick={handleDelete} className="flex items-center gap-2 order-1 sm:order-none">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect x="6" y="7" width="12" height="12" rx="2" stroke="#fff" strokeWidth="2"/><path d="M9 7V5a3 3 0 1 1 6 0v2" stroke="#fff" strokeWidth="2"/></svg>
+                Obriši ({selectedIds.length})
+              </Button>
+            )}
+            <Button onClick={() => setModalOpen(true)} variant="default" className="font-semibold bg-[#3A3CA6] hover:bg-blue-700 active:bg-blue-800 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none order-2 sm:order-none">
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
                 <path stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5"/>
               </svg>
@@ -207,8 +241,15 @@ export default function KorisniciPage() {
             <Button variant="outline" onClick={() => setExportOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">Izvoz</Button>
             <div className="relative">
               <Button variant="outline" onClick={() => setColumnsOpen(!columnsOpen)} className="flex items-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" className="mr-1"><path d="M3 6h18M3 12h18M3 18h18" stroke="#3A3CA6" strokeWidth="2" strokeLinecap="round"/></svg>
-                Kolone <span className="ml-1 bg-indigo-600 text-white rounded px-2">{visibleColumns.length}</span>
+                <span className="w-5 h-5 inline-block align-middle">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g id="columns-3-2" transform="translate(-2 -2)">
+                      <path id="secondary" fill="#2ca9bc" d="M4,3H20a1,1,0,0,1,1,1V7H3V4A1,1,0,0,1,4,3Z"/>
+                      <path id="primary" d="M15,7H9V21h6ZM3,7H21M20,21H4a1,1,0,0,1-1-1V4A1,1,0,0,1,4,3H20a1,1,0,0,1,1,1V20A1,1,0,0,1,20,21Z" fill="none" stroke="#000000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/>
+                    </g>
+                  </svg>
+                </span>
+                Kolone <span className="ml-1 bg-indigo-600 text-white rounded px-2">12</span>
               </Button>
               {columnsOpen && (
                 <ColumnsMenu 
@@ -225,7 +266,41 @@ export default function KorisniciPage() {
 
         {/* Tabela */}
         <div className="overflow-x-auto w-full">
-          <KorisniciTable korisnici={korisnici} onView={handleView} onMore={handleMore} loading={loading} visibleColumns={visibleColumns} />
+          <KorisniciTable
+            korisnici={paginatedKorisnici}
+            onView={handleView}
+            onMore={handleMore}
+            loading={loading}
+            visibleColumns={visibleColumns}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
+            onSelectAll={handleSelectAll}
+            allSelected={paginatedKorisnici.length > 0 && paginatedKorisnici.every(k => selectedIds.includes(k.id))}
+            page={page}
+            rowsPerPage={rowsPerPage}
+          />
+        </div>
+
+        {/* Pagination i ukupno stavki prikazujem samo ovde */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Broj redova:</span>
+            <select
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
+              value={rowsPerPage}
+              onChange={e => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
+            >
+              {[5, 10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
+          <div className="text-sm text-gray-600">
+            Ukupno stavki: <span className="font-medium">{korisnici.length}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>Prethodna</button>
+            <button className="border border-blue-500 bg-blue-500 text-white rounded px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">{page}</button>
+            <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>Sledeća</button>
+          </div>
         </div>
       </div>
 

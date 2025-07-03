@@ -1,6 +1,10 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Image from 'next/image';
+import Link from 'next/link';
+import { format } from 'date-fns';
+import NoviKorisnikModal from './NoviKorisnikModal';
+import UrediKorisnikModal from './UrediKorisnikModal';
 
 interface Korisnik {
   id: number;
@@ -33,25 +37,113 @@ interface Props {
   onMore: (id: number) => void;
   loading?: boolean;
   visibleColumns: string[];
+  selectedIds: number[];
+  onSelect: (id: number, checked: boolean) => void;
+  onSelectAll: (checked: boolean) => void;
+  allSelected: boolean;
+  page?: number;
+  rowsPerPage?: number;
 }
 
 const COLUMN_CONFIG = [
-  { key: 'id', label: 'Identifikator' },
-  { key: 'pristup', label: 'Pristup' },
-  { key: 'datum_pocetka', label: 'Datum početka zaposlenja' },
-  { key: 'uloga', label: 'Uloga' },
+  { key: 'rb', label: 'RB' },
   { key: 'korisnik', label: 'Korisnik' },
-  { key: 'datum_zavrsetka', label: 'Datum završetka zaposlenja' },
+  { key: 'uloga', label: 'Uloga' },
+  { key: 'pristup', label: 'Pristup' },
+  { key: 'broj_radne_dozvole', label: 'Broj radne dozvole' },
+  { key: 'pozicija', label: 'Pozicija' },
   { key: 'status_zaposlenja', label: 'Status zaposlenja' },
   { key: 'vrsta_zaposlenja', label: 'Vrsta zaposlenja' },
-  { key: 'pozicija', label: 'Pozicija' },
   { key: 'sektor', label: 'Sektor' },
-  { key: 'broj_radne_dozvole', label: 'Broj radne dozvole' },
+  { key: 'datum_pocetka', label: 'Datum početka zaposlenja' },
+  { key: 'datum_zavrsetka', label: 'Datum završetka zaposlenja' },
   { key: 'datum_kreiranja', label: 'Datum kreiranja' },
   { key: 'datum_azuriranja', label: 'Datum ažuriranja' },
 ];
 
-const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, visibleColumns }) => (
+const SEKTORI = [
+  { label: "Finansije", color: "#d1fae5" },
+  { label: "Informacione tehnologije", color: "#fecaca" },
+  { label: "Istraživanje i razvoj", color: "#bae6fd" },
+  { label: "Ljudski resursi", color: "#c7d2fe" },
+  { label: "Logistika", color: "#fef9c3" },
+  { label: "Marketing", color: "#a7f3d0" },
+  { label: "Prodaja", color: "#fca5a5" },
+  { label: "Proizvodnja", color: "#a5b4fc" },
+];
+
+function formatDatum(datum?: string) {
+  if (!datum) return '';
+  try {
+    const date = new Date(datum);
+    if (isNaN(date.getTime())) return datum;
+    return format(date, 'd.M.yyyy. HH:mm');
+  } catch {
+    return datum;
+  }
+}
+
+function KebabMenu({ onEdit, onDelete }: { onEdit: () => void, onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        className="text-gray-600 hover:bg-gray-100 rounded p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
+        onClick={() => setOpen((v) => !v)}
+        title="Više opcija"
+        type="button"
+      >
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" fill="#888"/><circle cx="12" cy="12" r="2" fill="#888"/><circle cx="12" cy="19" r="2" fill="#888"/></svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50 flex flex-col py-1">
+          <button
+            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            onClick={() => { setOpen(false); onEdit(); }}
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M4 21h4.586a1 1 0 0 0 .707-.293l10.414-10.414a2 2 0 0 0 0-2.828l-2.172-2.172a2 2 0 0 0-2.828 0L4.293 15.707A1 1 0 0 0 4 16.414V21z" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Uredi
+          </button>
+          <button
+            className="flex items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
+            onClick={() => { setOpen(false); onDelete(); }}
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 7h12M9 7V5a3 3 0 0 1 6 0v2m2 0v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7h12z" stroke="#b91c1c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Izbriši
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, visibleColumns, selectedIds, onSelect, onSelectAll, allSelected, page = 1, rowsPerPage = korisnici.length }) => {
+  const [editKorisnik, setEditKorisnik] = useState<Korisnik | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const handleEdit = (korisnik: Korisnik) => {
+    setEditKorisnik(korisnik);
+    setShowEditModal(true);
+  };
+  const handleDelete = async (id: number) => {
+    await fetch(`/api/zaposleni/korisnici?id=${id}`, { method: 'DELETE' });
+    setDeleteId(null);
+    window.location.reload();
+  };
+  const handleEditSave = async (data: any) => {
+    if (!editKorisnik) return;
+    await fetch(`/api/zaposleni/korisnici?id=${editKorisnik.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    setShowEditModal(false);
+    setEditKorisnik(null);
+    window.location.reload();
+  };
+
+  return (
   <div className="relative">
     {loading ? (
       <div className="flex items-center justify-center py-12">
@@ -72,6 +164,8 @@ const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, v
                 <input 
                   type="checkbox" 
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 hover:border-blue-400"
+                    checked={allSelected}
+                    onChange={e => onSelectAll(e.target.checked)}
                 />
               </th>
               {COLUMN_CONFIG.filter(col => visibleColumns.includes(col.key)).map(col => (
@@ -96,23 +190,24 @@ const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, v
                 </td>
               </tr>
             ) : (
-              korisnici.map((k) => (
+              korisnici.map((k, idx) => (
                 <tr key={k.id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="p-2">
                     <input 
                       type="checkbox" 
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 hover:border-blue-400"
+                        checked={selectedIds.includes(k.id)}
+                        onChange={e => onSelect(k.id, e.target.checked)}
                     />
                   </td>
                   {COLUMN_CONFIG.filter(col => visibleColumns.includes(col.key)).map(col => {
+                    if (col.key === 'rb') {
+                      return <td key={col.key} className="p-2">{(page - 1) * rowsPerPage + idx + 1}</td>;
+                    }
                     switch (col.key) {
-                      case 'id': return <td key={col.key} className="p-2">{k.id}</td>;
-                      case 'pristup': return <td key={col.key} className="p-2">{k.pristup}</td>;
-                      case 'datum_pocetka': return <td key={col.key} className="p-2">{k.datum_pocetka}</td>;
-                      case 'uloga': return <td key={col.key} className="p-2">{k.uloga}</td>;
-                      case 'korisnik':
-                        return (
-                          <td key={col.key} className="p-2 flex items-center gap-2">
+                                              case 'korisnik':
+                          return (
+                            <td key={col.key} className="p-2 flex items-center gap-2">
                             {k.fotografija ? (
                               <Image
                                 src={
@@ -128,67 +223,92 @@ const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, v
                                 height={32}
                               />
                             ) : (
-                              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gray-300`}>
-                                {(k.ime?.[0] || '') + (k.prezime?.[0] || '')}
+                                <span className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold text-white" style={{background:'#a5b4fc'}}>
+                                  {(k.ime?.[0] || '').toUpperCase() + (k.prezime?.[0] || '').toUpperCase()}
                               </span>
                             )}
                             {k.ime} {k.prezime}
                           </td>
                         );
-                      case 'datum_zavrsetka': return <td key={col.key} className="p-2">{k.datum_zavrsetka}</td>;
+                        case 'uloga': return <td key={col.key} className="p-2">{k.uloga}</td>;
+                        case 'pristup': return <td key={col.key} className="p-2">{k.pristup}</td>;
+                        case 'broj_radne_dozvole': return <td key={col.key} className="p-2">{k.broj_radne_dozvole}</td>;
+                        case 'pozicija': return <td key={col.key} className="p-2">{k.pozicija}</td>;
                       case 'status_zaposlenja': return <td key={col.key} className="p-2">{k.status_zaposlenja}</td>;
                       case 'vrsta_zaposlenja': return <td key={col.key} className="p-2">{k.vrsta_zaposlenja}</td>;
-                      case 'pozicija': return <td key={col.key} className="p-2">{k.pozicija}</td>;
-                      case 'sektor': return <td key={col.key} className="p-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-gray-300"></span>{k.sektor}</td>;
-                      case 'broj_radne_dozvole': return <td key={col.key} className="p-2">{k.broj_radne_dozvole}</td>;
-                      case 'datum_kreiranja': return <td key={col.key} className="p-2">{k.datum_kreiranja}</td>;
-                      case 'datum_azuriranja': return <td key={col.key} className="p-2">{k.datum_azuriranja}</td>;
+                        case 'sektor':
+                          const sektorObj = SEKTORI.find(s => s.label === k.sektor);
+                          return <td key={col.key} className="p-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{backgroundColor: sektorObj?.color || '#d1d5db'}}></span>{k.sektor}</td>;
+                        case 'datum_pocetka': return <td key={col.key} className="p-2">{formatDatum(k.datum_pocetka)}</td>;
+                        case 'datum_zavrsetka': return <td key={col.key} className="p-2">{formatDatum(k.datum_zavrsetka)}</td>;
+                        case 'datum_kreiranja': return <td key={col.key} className="p-2">{formatDatum(k.datum_kreiranja)}</td>;
+                        case 'datum_azuriranja': return <td key={col.key} className="p-2">{formatDatum(k.datum_azuriranja)}</td>;
                       default: return null;
                     }
                   })}
                   <td className="p-2 flex gap-2">
-                    <button 
+                      <Link
+                        href={`/zaposleni/korisnici/${k.id}`}
                       className="text-indigo-600 hover:bg-indigo-50 rounded p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                      onClick={() => onView(k.id)}
                       title="Pogledaj detalje"
                     >
-                      <span className="material-icons">visibility</span>
-                    </button>
-                    <button 
-                      className="text-gray-600 hover:bg-gray-100 rounded p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500" 
-                      onClick={() => onMore(k.id)}
-                      title="Više opcija"
-                    >
-                      <span className="material-icons">more_vert</span>
-                    </button>
+                        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="#888" strokeWidth="2"/><circle cx="12" cy="12" r="3" stroke="#888" strokeWidth="2"/></svg>
+                      </Link>
+                      <KebabMenu onEdit={() => handleEdit(k)} onDelete={() => setDeleteId(k.id)} />
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-        <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Broj redova:</span>
-            <select className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400">
-              <option>10</option>
-              <option>25</option>
-              <option>50</option>
-              <option>100</option>
-            </select>
           </div>
-          <div className="text-sm text-gray-600">
-            Ukupno stavki: <span className="font-medium">{korisnici.length}</span>
+      )}
+      {showEditModal && editKorisnik && (
+        <UrediKorisnikModal
+          open={showEditModal}
+          onClose={() => { setShowEditModal(false); setEditKorisnik(null); }}
+          onSave={handleEditSave}
+          korisnik={{
+            ime: editKorisnik.ime || '',
+            prezime: editKorisnik.prezime || '',
+            pol: '',
+            datum_rodjenja: '',
+            jmbg: '',
+            adresa: '',
+            mesto: '',
+            grad: '',
+            fotografija: editKorisnik.fotografija || '',
+            email: editKorisnik.email || '',
+            telefon: editKorisnik.telefon || '',
+            pozicija: editKorisnik.pozicija || '',
+            sektor: editKorisnik.sektor || '',
+            status_zaposlenja: editKorisnik.status_zaposlenja || '',
+            vrsta_zaposlenja: editKorisnik.vrsta_zaposlenja || '',
+            broj_radne_dozvole: editKorisnik.broj_radne_dozvole || '',
+            datum_pocetka: editKorisnik.datum_pocetka || '',
+            datum_zavrsetka: editKorisnik.datum_zavrsetka || '',
+            uloga: editKorisnik.uloga || '',
+            pristup: editKorisnik.pristup || '',
+            sifra: '',
+            plata: '',
+            period_plate: '',
+          }}
+        />
+      )}
+      {deleteId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Brisanje korisnika</h2>
+              <button onClick={() => setDeleteId(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
           </div>
-          <div className="flex items-center gap-1">
-            <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
-              Prethodna
+            <div className="mb-6 text-gray-700">Da li ste sigurni da želite da obrišete ovog korisnika?</div>
+            <div className="flex gap-2 justify-end">
+              <button className="flex items-center gap-2 px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition" onClick={() => handleDelete(deleteId)}>
+                Izbriši
             </button>
-            <button className="border border-blue-500 bg-blue-500 text-white rounded px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
-              1
-            </button>
-            <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>
-              Sledeća
+              <button className="flex items-center gap-2 px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onClick={() => setDeleteId(null)}>
+                Otkaži
             </button>
           </div>
         </div>
@@ -196,5 +316,6 @@ const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, v
     )}
   </div>
 );
+};
 
 export default KorisniciTable; 

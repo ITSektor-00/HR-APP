@@ -4,6 +4,7 @@ import Image from "next/image";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import './NoviKorisnikModal.css';
+import Select from 'react-select';
 
 interface KorisnikData {
   ime: string;
@@ -36,6 +37,8 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onAdd: (data: KorisnikData) => void;
+  korisnik?: KorisnikData;
+  editMode?: boolean;
 }
 
 const tabs = [
@@ -126,7 +129,27 @@ async function uploadToCloudinary(file: File): Promise<string | null> {
   }
 }
 
-const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
+// Dodaj funkciju za upload PDF-a i ekstrakciju podataka
+async function extractFromPdf(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch('/api/ekstraktuj-podatke', {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Greška pri ekstrakciji podataka iz PDF-a');
+  return await res.json();
+}
+
+// Custom options for sektor
+const sektorOptions = SEKTORI.map(s => ({ value: s.label, label: (
+  <span style={{display:'flex',alignItems:'center',gap:6}}>
+    <span style={{display:'inline-block',width:12,height:12,borderRadius:'50%',background:s.color}}></span>
+    {s.label}
+  </span>
+)}));
+
+const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, editMode }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [activeTab, setActiveTab] = useState("licni");
   const [showPassword, setShowPassword] = useState(false);
@@ -170,19 +193,28 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
 
   useEffect(() => {
     if (open) {
-      setForm({} as KorisnikData);
-      setDatumRodjenja(null);
-      setDatumPocetka(null);
-      setDatumZavrsetka(null);
-      setSlika(null);
+      if (editMode && korisnik) {
+        setForm(korisnik);
+        setDatumRodjenja(korisnik.datum_rodjenja ? new Date(korisnik.datum_rodjenja) : null);
+        setDatumPocetka(korisnik.datum_pocetka ? new Date(korisnik.datum_pocetka) : null);
+        setDatumZavrsetka(korisnik.datum_zavrsetka ? new Date(korisnik.datum_zavrsetka) : null);
+        setSlika(korisnik.fotografija || null);
+        setSektor(korisnik.sektor || SEKTORI[0].label);
+        setPeriodPlate(korisnik.period_plate || 'Mesečno');
+      } else {
+        setForm({} as KorisnikData);
+        setDatumRodjenja(null);
+        setDatumPocetka(null);
+        setDatumZavrsetka(null);
+        setSlika(null);
+        setSektor(SEKTORI[0].label);
+        setPeriodPlate('Mesečno');
+      }
       setActiveTab("licni");
       setErrors(initialErrors);
       setBackendError(null);
-      setPeriodPlate("Mesečno");
-      setSektor(SEKTORI[0].label);
-      setShowLkModal(false);
     }
-  }, [open, initialErrors]);
+  }, [open, editMode, korisnik, initialErrors]);
 
   if (!open) return null;
 
@@ -239,6 +271,29 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
     // Upload to Cloudinary
     const url = await uploadToCloudinary(file);
     if (url) setSlika(url);
+  };
+
+  // Dodaj handler za PDF upload
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const data = await extractFromPdf(file);
+      setForm(f => ({
+        ...f,
+        ime: data.ime || f.ime,
+        prezime: data.prezime || f.prezime,
+        jmbg: data.jmbg || f.jmbg,
+        pol: data.pol === 'M' ? 'Muški' : data.pol === 'Ž' ? 'Ženski' : f.pol,
+        adresa: data.prebivaliste || f.adresa,
+        datum_rodjenja: data.datum_rodjenja || f.datum_rodjenja,
+        mesto: data.mesto_rodjenja || f.mesto,
+        // Dodaj još polja po potrebi
+      }));
+      if (data.datum_rodjenja) setDatumRodjenja(new Date(data.datum_rodjenja.replace(/\./g, '-')));
+    } catch (err) {
+      alert('Greška pri ekstrakciji podataka iz PDF-a.');
+    }
   };
 
   return (
@@ -408,6 +463,11 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
                     <input className="border rounded p-2" name="telefon" value={form.telefon || ''} onChange={handleInput} onBlur={handleBlur} />
                     {errors.telefon && <div className="text-red-500 text-xs mt-1">* {errors.telefon || 'Unesite broj telefona'}</div>}
                   </div>
+                  <div className="flex flex-col gap-1 col-span-2">
+                    <label className="text-sm font-medium">Učitaj PDF lične karte</label>
+                    <input type="file" accept="application/pdf" onChange={handlePdfUpload} />
+                    <span className="text-xs text-gray-600">Automatski popunjava polja iz PDF-a lične karte.</span>
+                  </div>
                 </div>
               </>
             )}
@@ -436,25 +496,14 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium">Sektor</label>
-                  <div className="relative">
-                    <select
-                      className="border rounded p-2 w-full appearance-none pr-8"
-                      name="sektor"
-                      value={form.sektor || ''}
-                      onChange={handleInput}
-                      onBlur={handleBlur}
-                      required
-                    >
-                      {SEKTORI.map(s => (
-                        <option key={s.label} value={s.label}>{s.label}</option>
-                      ))}
-                    </select>
-                    <span className="absolute right-2 top-3 pointer-events-none">
-                      {SEKTORI.find(s => s.label === form.sektor) && (
-                        <span className="inline-block w-3 h-3 rounded-full" style={{ background: SEKTORI.find(s => s.label === form.sektor)?.color }}></span>
-                      )}
-                    </span>
-                  </div>
+                  <Select
+                    options={sektorOptions}
+                    value={sektorOptions.find(opt => opt.value === sektor)}
+                    onChange={opt => opt && setSektor(opt.value)}
+                    classNamePrefix="react-select"
+                    className="w-full"
+                    styles={{ menu: (base) => ({ ...base, backgroundColor: 'white', zIndex: 100 }) }}
+                  />
                   {errors.sektor && <div className="text-red-500 text-xs mt-1">* {errors.sektor || 'Unesite sektor'}</div>}
                 </div>
                 <div className="flex flex-col gap-1">
@@ -520,14 +569,14 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd }) => {
                         <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                       </button>
                       {showPeriodi && (
-                        <div className="absolute left-0 top-12 bg-white border rounded shadow z-20 min-w-[120px]">
-                          {PERIODI.map(p => (
+                        <div className="absolute left-0 top-12 bg-white border rounded shadow z-20 min-w-[90px] max-w-[120px] text-sm">
+                          {PERIODI.map(period => (
                             <div
-                              key={p}
-                              className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${periodPlate === p ? "font-bold text-indigo-600" : ""}`}
-                              onClick={() => { setPeriodPlate(p); setShowPeriodi(false); }}
+                              key={period}
+                              className={`px-2 py-1 cursor-pointer hover:bg-gray-100 ${periodPlate === period ? "font-bold text-indigo-600" : ""}`}
+                              onClick={() => { setPeriodPlate(period); setShowPeriodi(false); }}
                             >
-                              <span>{p}</span>
+                              <span>{period}</span>
                             </div>
                           ))}
                         </div>

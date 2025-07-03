@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const ALL_COLUMNS = [
-  { key: 'id', label: 'Identifikator' },
-  { key: 'pristup', label: 'Pristup' },
-  { key: 'datum_pocetka', label: 'Datum početka zaposlenja' },
-  { key: 'uloga', label: 'Uloga' },
   { key: 'korisnik', label: 'Korisnik' },
-  { key: 'datum_zavrsetka', label: 'Datum završetka zaposlenja' },
+  { key: 'uloga', label: 'Uloga' },
+  { key: 'pristup', label: 'Pristup' },
+  { key: 'broj_radne_dozvole', label: 'Broj radne dozvole' },
+  { key: 'pozicija', label: 'Pozicija' },
   { key: 'status_zaposlenja', label: 'Status zaposlenja' },
   { key: 'vrsta_zaposlenja', label: 'Vrsta zaposlenja' },
-  { key: 'pozicija', label: 'Pozicija' },
   { key: 'sektor', label: 'Sektor' },
-  { key: 'broj_radne_dozvole', label: 'Broj radne dozvole' },
-  { key: 'datum_kreiranja', label: 'Datum kreiranja' }
-  // { key: 'datum_azuriranja', label: 'Datum ažuriranja' }, // UKLANJAMO ovu kolonu da bude ukupno 12
+  { key: 'datum_pocetka', label: 'Datum početka zaposlenja' },
+  { key: 'datum_zavrsetka', label: 'Datum završetka zaposlenja' },
+  { key: 'datum_kreiranja', label: 'Datum kreiranja' },
+  { key: 'datum_azuriranja', label: 'Datum ažuriranja' },
 ];
 
 type ColumnsMenuProps = {
@@ -131,7 +130,7 @@ export default function ColumnsMenu({ open, onClose, selected, onChange }: Colum
         ))}
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2 border-t border-gray-200 gap-2">
-        <div className="flex gap-2">
+        <div className="w-full flex flex-row justify-between">
           <button 
             onClick={handleAll} 
             className="text-xs text-blue-600 hover:text-blue-800 font-medium"
