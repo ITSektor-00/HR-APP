@@ -108,10 +108,10 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
   const [form, setForm] = useState<PoljaFormValues>(values);
   const [lokacijaInput, setLokacijaInput] = useState("");
   const [showCustomLokacija, setShowCustomLokacija] = useState(false);
-  const [showStavkaForm, setShowStavkaForm] = useState(false);
-  const [stavka, setStavka] = useState({ zaposleni: "", nekorisceni: "", korisceni: "" });
+  const [stavke, setStavke] = useState<{ zaposleni: string; nekorisceni: string; korisceni: string }[]>([]);
+  const [novaStavka, setNovaStavka] = useState({ zaposleni: "", nekorisceni: "", korisceni: "" });
+  const [showStavkaRow, setShowStavkaRow] = useState(false);
 
-  // Kada se otvori forma, inicijalizuj lokalni state iz props.values
   useEffect(() => {
     if (open) {
       setForm(values);
@@ -120,11 +120,13 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
         setLokacijaInput(v.lokacija && !lokacije.includes(v.lokacija) ? v.lokacija : "");
         setShowCustomLokacija(Boolean(v.lokacija && !lokacije.includes(v.lokacija)));
       }
+      setStavke([]);
+      setShowStavkaRow(false);
+      setNovaStavka({ zaposleni: "", nekorisceni: "", korisceni: "" });
     }
     // eslint-disable-next-line
   }, [open, values, docType]);
 
-  // Kada se forma zatvori, pošalji promene parentu
   const handleClose = () => {
     if (docType === 'plan') {
       onChange({ ...(form as PoljaPlanFormValues), lokacija: showCustomLokacija ? lokacijaInput : (form as PoljaPlanFormValues).lokacija });
@@ -232,12 +234,101 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
                   onChange={e => setForm(f => ({ ...(f as PoljaPlanFormValues), datumPotpisa: e.target.value }))}
                 />
               </label>
-              <div className="flex gap-1 mt-2">
-                <button type="button" className="flex-1 bg-[#e5e8ef] text-[#3A3CA6] font-semibold py-2 rounded-lg cursor-pointer">Zaposleni</button>
-                <button type="button" className="flex-1 bg-[#e5e8ef] text-[#3A3CA6] font-semibold py-2 rounded-lg cursor-pointer">Nekorišćeni</button>
-                <button type="button" className="flex-1 bg-[#e5e8ef] text-[#3A3CA6] font-semibold py-2 rounded-lg cursor-pointer">Korišćeni</button>
+              <div className="flex gap-1 mt-2 mb-2">
+                <div className="flex-1 text-center text-base font-semibold text-[#3A3CA6]">Zaposleni</div>
+                <div className="flex-1 text-center text-base font-semibold text-[#3A3CA6]">Nekorišćeni</div>
+                <div className="flex-1 text-center text-base font-semibold text-[#3A3CA6]">Korišćeni</div>
               </div>
-              <button type="button" className="w-full mt-2 bg-[#e5e8ef] text-[#3A3CA6] font-semibold py-2 rounded-lg flex items-center justify-center gap-2" onClick={() => setShowStavkaForm(true)}>
+              <div className="w-full">
+                {stavke.length > 0 && stavke.map((s, idx) => (
+                  <div key={idx} className="flex items-center gap-2 mb-2">
+                    <div className="flex-1">
+                      <select
+                        className="w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
+                        value={s.zaposleni}
+                        disabled
+                      >
+                        <option value="">Izaberi zaposlenog</option>
+                        {korisnici.map(k => <option key={k} value={k}>{k}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        className="w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
+                        type="text"
+                        value={s.nekorisceni}
+                        disabled
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        className="w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
+                        type="text"
+                        value={s.korisceni}
+                        disabled
+                      />
+                    </div>
+                    <button type="button" className="p-2 bg-red-100 hover:bg-red-200 rounded" title="Obriši stavku" onClick={() => setStavke(stavke => stavke.filter((_, i) => i !== idx))}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-500">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                {showStavkaRow && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1">
+                      <select
+                        className="w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
+                        value={novaStavka.zaposleni}
+                        onChange={e => setNovaStavka(s => ({ ...s, zaposleni: e.target.value }))}
+                      >
+                        <option value="">Izaberi zaposlenog</option>
+                        {korisnici.map(k => <option key={k} value={k}>{k}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        className="w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
+                        type="text"
+                        value={novaStavka.nekorisceni}
+                        onChange={e => setNovaStavka(s => ({ ...s, nekorisceni: e.target.value }))}
+                        placeholder="Nekorišćeni"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        className="w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
+                        type="text"
+                        value={novaStavka.korisceni}
+                        onChange={e => setNovaStavka(s => ({ ...s, korisceni: e.target.value }))}
+                        placeholder="Korišćeni"
+                      />
+                    </div>
+                    <button type="button" className="p-2 bg-red-100 hover:bg-red-200 rounded" title="Otkaži unos" onClick={() => {
+                      setShowStavkaRow(false);
+                      setNovaStavka({ zaposleni: "", nekorisceni: "", korisceni: "" });
+                    }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-500">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                className="w-full mt-2 bg-[#e5e8ef] text-[#3A3CA6] font-semibold py-2 rounded-lg flex items-center justify-center gap-2"
+                onClick={() => {
+                  if (!showStavkaRow) setShowStavkaRow(true);
+                  else if (novaStavka.zaposleni && novaStavka.nekorisceni && novaStavka.korisceni) {
+                    setStavke(stavke => [...stavke, novaStavka]);
+                    setNovaStavka({ zaposleni: "", nekorisceni: "", korisceni: "" });
+                    setShowStavkaRow(false);
+                  }
+                }}
+                disabled={showStavkaRow && (!novaStavka.zaposleni || !novaStavka.nekorisceni || !novaStavka.korisceni)}
+              >
                 <span className="text-xl">＋</span> Nova stavka
               </button>
             </>
@@ -498,40 +589,50 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
           {docType === 'ugovor-o-radu' && (
             <>
               <label className="text-sm font-medium">Kompanija
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).kompanija || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), kompanija: e.target.value }))} placeholder="Kompanija" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).kompanija || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), kompanija: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Matični broj
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).maticniBroj || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), maticniBroj: e.target.value }))} placeholder="Matični broj" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).maticniBroj || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), maticniBroj: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">PIB
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).pib || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), pib: e.target.value }))} placeholder="PIB" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).pib || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), pib: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Adresa
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).adresa || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), adresa: e.target.value }))} placeholder="Adresa" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).adresa || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), adresa: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Datum potpisivanja
                 <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="date" value={(form as PoljaUgovorORaduFormValues).datumPotpisa || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), datumPotpisa: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Direktor
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).direktor || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), direktor: e.target.value }))} placeholder="Direktor" />
+                <select className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" value={(form as PoljaUgovorORaduFormValues).direktor || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), direktor: e.target.value }))}>
+                  <option value="">Izaberite direktora</option>
+                  {direktori.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
               </label>
               <label className="text-sm font-medium">Zaposleni
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).zaposleni || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), zaposleni: e.target.value }))} placeholder="Zaposleni" />
+                <select className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" value={(form as PoljaUgovorORaduFormValues).zaposleni || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), zaposleni: e.target.value }))}>
+                  <option value="">Izaberite zaposlenog</option>
+                  {korisnici.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
               </label>
               <label className="text-sm font-medium">Posao
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).posao || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), posao: e.target.value }))} placeholder="Posao" />
+                <select className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" value={(form as PoljaUgovorORaduFormValues).posao || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), posao: e.target.value }))}>
+                  <option value="">Izaberite posao</option>
+                  <option value="Radno mesto 1">Radno mesto 1</option>
+                  <option value="Radno mesto 2">Radno mesto 2</option>
+                </select>
               </label>
               <label className="text-sm font-medium">Stepen stručne spreme
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).stepenStrucneSpreme || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), stepenStrucneSpreme: e.target.value }))} placeholder="Stepen stručne spreme" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).stepenStrucneSpreme || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), stepenStrucneSpreme: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Mesto rođenja zaposlenog
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).mestoRodjenja || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), mestoRodjenja: e.target.value }))} placeholder="Mesto rođenja" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).mestoRodjenja || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), mestoRodjenja: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Zanimanje zaposlenog
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).zanimanje || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), zanimanje: e.target.value }))} placeholder="Zanimanje" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).zanimanje || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), zanimanje: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Određeno ili neodređeno
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).odredjenoNeodredjeno || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), odredjenoNeodredjeno: e.target.value }))} placeholder="Određeno ili neodređeno" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).odredjenoNeodredjeno || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), odredjenoNeodredjeno: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Datum početka
                 <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="date" value={(form as PoljaUgovorORaduFormValues).datumPocetka || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), datumPocetka: e.target.value }))} />
@@ -540,16 +641,16 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
                 <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="date" value={(form as PoljaUgovorORaduFormValues).datumZavrsetka || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), datumZavrsetka: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Nadoknada za ishranu
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).nadoknadaZaIshranu || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), nadoknadaZaIshranu: e.target.value }))} placeholder="Nadoknada za ishranu" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).nadoknadaZaIshranu || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), nadoknadaZaIshranu: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Regres za korišćenje godišnjeg odmora
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).regresZaGodisnji || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), regresZaGodisnji: e.target.value }))} placeholder="Regres za godišnji" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).regresZaGodisnji || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), regresZaGodisnji: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Odgovornost
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).odgovornost || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), odgovornost: e.target.value }))} placeholder="Odgovornost" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).odgovornost || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), odgovornost: e.target.value }))} />
               </label>
               <label className="text-sm font-medium">Plata
-                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).plata || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), plata: e.target.value }))} placeholder="Plata" />
+                <input className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]" type="text" value={(form as PoljaUgovorORaduFormValues).plata || ''} onChange={e => setForm(f => ({ ...(f as PoljaUgovorORaduFormValues), plata: e.target.value }))} />
               </label>
             </>
           )}
@@ -557,57 +658,6 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
             <button type="submit" className="flex-1 bg-[#3A3CA6] text-white font-semibold py-2 rounded-lg cursor-pointer">Sačuvaj</button>
           </div>
         </form>
-        {showStavkaForm && (
-          <div className="mt-4 p-3 border rounded-lg bg-[#f7f7fa] flex flex-col gap-2">
-            <label className="text-sm font-medium flex items-center gap-2">Zaposleni
-              <input
-                className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
-                type="text"
-                value={stavka.zaposleni}
-                onChange={e => setStavka(s => ({ ...s, zaposleni: e.target.value }))}
-                placeholder="Ime i prezime zaposlenog"
-              />
-              {stavka.zaposleni && (
-                <button type="button" className="ml-2 p-2 bg-red-100 hover:bg-red-200 rounded" onClick={() => setStavka(s => ({ ...s, zaposleni: "" }))} title="Obriši ime">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-500">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </label>
-            <label className="text-sm font-medium">Nekorišćeni
-              <input
-                className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
-                type="text"
-                value={stavka.nekorisceni}
-                onChange={e => setStavka(s => ({ ...s, nekorisceni: e.target.value }))}
-                placeholder="Neiskorišćen godišnji odmor iz prethodne godine*"
-              />
-            </label>
-            <label className="text-sm font-medium">Korišćeni
-              <input
-                className="mt-1 w-full border rounded px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#3A3CA6]"
-                type="text"
-                value={stavka.korisceni}
-                onChange={e => setStavka(s => ({ ...s, korisceni: e.target.value }))}
-                placeholder="Korišćen godišnji odmor u tekućoj godini"
-              />
-            </label>
-            <div className="flex gap-2 mt-2">
-              <button type="button" className="flex-1 bg-[#3A3CA6] text-white font-semibold py-2 rounded-lg" onClick={() => {
-                if (stavka.zaposleni && stavka.nekorisceni && stavka.korisceni && typeof onAddStavka === 'function') {
-                  onAddStavka(stavka);
-                  setStavka({ zaposleni: "", nekorisceni: "", korisceni: "" });
-                  setShowStavkaForm(false);
-                }
-              }}>Potvrdi</button>
-              <button type="button" className="flex-1 bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg" onClick={() => {
-                setShowStavkaForm(false);
-                setStavka({ zaposleni: "", nekorisceni: "", korisceni: "" });
-              }}>Otkaži</button>
-            </div>
-          </div>
-        )}
       </div>
       <style jsx>{`
         .animate-fade-in { animation: fade-in 0.2s ease; }
