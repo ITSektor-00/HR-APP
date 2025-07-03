@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import PoljaForm from "./PoljaForm";
-import type { PoljaPlanFormValues, PoljaUgovorVoziloFormValues } from "./PoljaForm";
+import type { PoljaPlanFormValues, PoljaUgovorVoziloFormValues, PoljaResenjeOdsustvoFormValues, PoljaResenjeZamenaGodisnjiFormValues, PoljaUgovorORaduFormValues } from "./PoljaForm";
+// TypeScript fix for html2pdf.js
+// @ts-expect-error - html2pdf.js doesn't have proper TypeScript definitions
+import html2pdf from 'html2pdf.js';
 
 const documents = [
   {
@@ -27,8 +30,92 @@ const documents = [
   }
 ];
 
+// Funkcija za PDF izvoz
+const exportToPDF = (documentTitle: string, setIsGeneratingPDF: (loading: boolean) => void) => {
+  const accordions = Array.from(document.querySelectorAll('.bg-white.rounded-lg.shadow.border')) as HTMLElement[];
+  let activeAccordion: HTMLElement | null = null;
+  accordions.forEach((accordion) => {
+    const content = accordion.querySelector('.px-0.pb-8');
+    if (content && content.innerHTML.trim() !== '') {
+      activeAccordion = accordion;
+    }
+  });
+  if (!activeAccordion) {
+    console.error('Nije pronađen aktivni dokument');
+    return;
+  }
+  setIsGeneratingPDF(true);
+  const buttonsToHide = Array.from((activeAccordion as HTMLElement).querySelectorAll('button')) as HTMLButtonElement[];
+  const originalDisplay = buttonsToHide.map((btn) => btn.style.display);
+  buttonsToHide.forEach((btn) => {
+    btn.style.display = 'none';
+  });
+  const documentContent = (activeAccordion as HTMLElement).querySelector('.px-0.pb-8') as HTMLElement;
+  if (documentContent) {
+    const tempContainer = document.createElement('div');
+    tempContainer.style.cssText = `
+      background: white;
+      padding: 20px;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: black;
+      max-width: 210mm;
+      margin: 0 auto;
+    `;
+    const contentClone = documentContent.cloneNode(true) as HTMLElement;
+    const buttonsInClone = Array.from(contentClone.querySelectorAll('button')) as HTMLButtonElement[];
+    buttonsInClone.forEach((btn) => btn.remove());
+    const allElements = Array.from(contentClone.querySelectorAll('*')) as HTMLElement[];
+    allElements.forEach((element) => {
+      element.style.backgroundColor = 'transparent';
+      element.style.color = 'black';
+      element.style.borderColor = 'black';
+    });
+    tempContainer.appendChild(contentClone);
+    document.body.appendChild(tempContainer);
+    const opt = {
+      margin: [15, 15, 15, 15],
+      filename: `${documentTitle.replace(/[^a-zA-Z0-9\s]/g, '')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      }
+    };
+    html2pdf().set(opt).from(tempContainer).save().then(() => {
+      document.body.removeChild(tempContainer);
+      buttonsToHide.forEach((btn, index) => {
+        btn.style.display = originalDisplay[index] || '';
+      });
+      setIsGeneratingPDF(false);
+    }).catch(() => {
+      if (document.body.contains(tempContainer)) {
+        document.body.removeChild(tempContainer);
+      }
+      buttonsToHide.forEach((btn, index) => {
+        btn.style.display = originalDisplay[index] || '';
+      });
+      setIsGeneratingPDF(false);
+    });
+  } else {
+    buttonsToHide.forEach((btn, index) => {
+      btn.style.display = originalDisplay[index] || '';
+    });
+    setIsGeneratingPDF(false);
+  }
+};
+
 export default function KorisniciDokumenti() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showPolja, setShowPolja] = useState(false);
   const [polja, setPolja] = useState({
     clanZakona: "",
@@ -52,6 +139,78 @@ export default function KorisniciDokumenti() {
     datumPotpisa: new Date().toISOString().slice(0, 10),
   });
   const [showPoljaUgovorVozilo, setShowPoljaUgovorVozilo] = useState(false);
+  const [poljaResenjeOdsustvo, setPoljaResenjeOdsustvo] = useState({
+    zaposleni: '',
+    direktor: '',
+    kompanija: 'Kompanija 1',
+    adresa: '',
+    maticniBroj: '',
+    pib: '',
+    clanZakona: '',
+    nazivAkta: '',
+    lokacija: '',
+    datumPisanja: new Date().toISOString().slice(0, 10),
+    datumPotpisa: new Date().toISOString().slice(0, 10),
+    razlogOdsustva: '',
+    periodOdsustva: '',
+    broj: '',
+    nazivPoslova: '',
+    odredjenoNeodredjeno: '',
+    brojUgovora: '',
+    ovlascenoLice: '',
+    dostavljeno2: '',
+    dostavljeno3: '',
+  });
+  const [showPoljaResenjeOdsustvo, setShowPoljaResenjeOdsustvo] = useState(false);
+  const [poljaResenjeZamenaGodisnji, setPoljaResenjeZamenaGodisnji] = useState<PoljaResenjeZamenaGodisnjiFormValues>({
+    kompanija: 'Kompanija 1',
+    adresa: '',
+    broj: '',
+    mesto: '',
+    datum: new Date().toISOString().slice(0, 10),
+    zakon: '',
+    clanZakona: '',
+    clanUgovora: '',
+    brojOvlascenja: '',
+    direktor: '',
+    zaposleni: '',
+    nazivPosla: '',
+    brojResenja: '',
+    brojRada: '',
+    mestoDomaZdravlja: '',
+    dostavljeno2: '',
+    dostavljeno3: '',
+    datumPocetka: new Date().toISOString().slice(0, 10),
+    datumZavrsetka: new Date().toISOString().slice(0, 10),
+    trajanjeUDanima: '0',
+  });
+  const [showPoljaResenjeZamenaGodisnji, setShowPoljaResenjeZamenaGodisnji] = useState(false);
+  const [poljaUgovorORadu, setPoljaUgovorORadu] = useState<PoljaUgovorORaduFormValues>({
+    kompanija: 'Kompanija 1',
+    maticniBroj: '',
+    pib: '',
+    adresa: '',
+    datumPotpisa: new Date().toISOString().slice(0, 10),
+    direktor: '',
+    zaposleni: '',
+    posao: '',
+    stepenStrucneSpreme: '',
+    mestoRodjenja: '',
+    zanimanje: '',
+    odredjenoNeodredjeno: '',
+    datumPocetka: new Date().toISOString().slice(0, 10),
+    datumZavrsetka: new Date().toISOString().slice(0, 10),
+    nadoknadaZaIshranu: '',
+    regresZaGodisnji: '',
+    odgovornost: '',
+    plata: '',
+  });
+  const [showPoljaUgovorORadu, setShowPoljaUgovorORadu] = useState(false);
+
+  // Helper za današnji datum u formatu yyyy-mm-dd
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
 
   // Helperi za prikaz datuma u srpskom formatu
   function formatDatum(d: string) {
@@ -67,11 +226,16 @@ export default function KorisniciDokumenti() {
   }
 
   function prikaziPolje(vrednost: string, placeholder: string, bold = false, italic = false) {
-    if (!vrednost) vrednost = `« ${placeholder} »`;
-    if (bold && italic) return <b><i>{vrednost}</i></b>;
-    if (bold) return <b>{vrednost}</b>;
-    if (italic) return <i>{vrednost}</i>;
-    return vrednost;
+    let prikaz;
+    if (!vrednost) {
+      prikaz = `« ${placeholder} »`;
+    } else {
+      prikaz = vrednost;
+    }
+    if (bold && italic) return <b><i>{prikaz}</i></b>;
+    if (bold) return <b>{prikaz}</b>;
+    if (italic) return <i>{prikaz}</i>;
+    return prikaz;
   }
 
   function PlanGodisnjegOdmoraDynamic() {
@@ -92,11 +256,21 @@ export default function KorisniciDokumenti() {
             Polja
           </button>
           <button
-            className="flex items-center gap-2 bg-[#3A3CA6] hover:bg-[#23244d] text-white font-semibold px-4 py-2 rounded transition"
-            onClick={() => window.print()}
+            className="flex items-center gap-2 bg-[#3A3CA6] hover:bg-[#23244d] text-white font-semibold px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => exportToPDF("Plan korišćenja godišnjeg odmora", setIsGeneratingPDF)}
+            disabled={isGeneratingPDF}
           >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9V4h12v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><rect x="6" y="13" width="12" height="7" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            Izvoz
+            {isGeneratingPDF ? (
+              <svg className="animate-spin" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="31.416" strokeDashoffset="31.416">
+                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            ) : (
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9V4h12v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><rect x="6" y="13" width="12" height="7" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            )}
+            {isGeneratingPDF ? 'Generisanje...' : 'Izvoz'}
           </button>
         </div>
         <div className="bg-white rounded-lg shadow border border-[var(--border-color)] w-full max-w-5xl p-8 mt-2">
@@ -178,11 +352,21 @@ export default function KorisniciDokumenti() {
             Polja
           </button>
           <button
-            className="flex items-center gap-2 bg-[#3A3CA6] hover:bg-[#23244d] text-white font-semibold px-4 py-2 rounded transition"
-            onClick={() => window.print()}
+            className="flex items-center gap-2 bg-[#3A3CA6] hover:bg-[#23244d] text-white font-semibold px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => exportToPDF("Ugovor o korišćenju putničkog vozila", setIsGeneratingPDF)}
+            disabled={isGeneratingPDF}
           >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9V4h12v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><rect x="6" y="13" width="12" height="7" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            Izvoz
+            {isGeneratingPDF ? (
+              <svg className="animate-spin" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="31.416" strokeDashoffset="31.416">
+                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            ) : (
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9V4h12v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><rect x="6" y="13" width="12" height="7" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            )}
+            {isGeneratingPDF ? 'Generisanje...' : 'Izvoz'}
           </button>
         </div>
         <div className="bg-white rounded-lg shadow border border-[var(--border-color)] w-full max-w-5xl p-8 mt-2">
@@ -243,6 +427,375 @@ export default function KorisniciDokumenti() {
     );
   }
 
+  function ResenjeOdsustvoDynamic() {
+    // Uvek koristi live datum za prikaz
+    const datum = formatDatum(todayISO());
+    const datumPotpisa = formatDatum(todayISO());
+    return (
+      <div className="flex flex-col items-center w-full">
+        {/* Dugmad gore desno */}
+        <div className="flex justify-end w-full max-w-5xl mb-2 gap-2">
+          <button
+            className="flex items-center gap-2 bg-gray-400 hover:bg-gray-500 text-white font-semibold px-4 py-2 rounded transition"
+            onClick={() => setShowPoljaResenjeOdsustvo(true)}
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            Polja
+          </button>
+          <button
+            className="flex items-center gap-2 bg-[#3A3CA6] hover:bg-[#23244d] text-white font-semibold px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => exportToPDF("Rešenje o odsustvu sa rada bez naknade zarade (neplaćeno odsustvo)", setIsGeneratingPDF)}
+            disabled={isGeneratingPDF}
+          >
+            {isGeneratingPDF ? (
+              <svg className="animate-spin" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="31.416" strokeDashoffset="31.416">
+                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            ) : (
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9V4h12v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><rect x="6" y="13" width="12" height="7" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            )}
+            {isGeneratingPDF ? 'Generisanje...' : 'Izvoz'}
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow border border-[var(--border-color)] w-full max-w-4xl p-12 mt-2">
+          <h2 className="text-2xl font-bold text-center mb-8">REŠENJE O ODSUSTVU SA RADA BEZ NAKNADE ZARADE (NEPLAĆENO ODSUSTVO)</h2>
+          <div className="text-left font-semibold mb-4">
+            Kompanija 1, <i>{prikaziPolje(poljaResenjeOdsustvo.adresa, "ADRESA", true)}</i><br />
+            <b>** {prikaziPolje(poljaResenjeOdsustvo.broj, "BROJ", true)} **</b><br />
+            <b>** {prikaziPolje(poljaResenjeOdsustvo.lokacija, "MESTO", true)} </b>, {datum}
+          </div>
+          <div className="mb-6">
+            Na osnovu čl. 78. i 192. Zakona o radu (&quot;Sl. glasnik RS&quot;, <b><i>{prikaziPolje(poljaResenjeOdsustvo.clanZakona, "ZAKON")}</i></b> - dalje: Zakon) <b><i>NADLEŽNI ORGAN</i></b> (navesti nadležni organ kod poslodavca, odnosno lice utvrđeno zakonom ili osnivačkim ili drugim opštim aktom poslodavca ili lice koje su oni ovlastili – dalje: ovlašćeno lice) Kompanija 1, <b><i>{prikaziPolje(poljaResenjeOdsustvo.adresa, "ADRESA")}</i></b> (navesti naziv i sedište poslodavca) donosi:
+          </div>
+          <h3 className="text-xl font-bold text-center mb-4">REŠENJE</h3>
+          <div className="mb-6">
+            1. Zaposlenom <b><i>{prikaziPolje(poljaResenjeOdsustvo.zaposleni, "IME I PREZIME ZAPOSLENOG")}</i></b> (ime i prezime, stepen stručne spreme i zanimanje), na poslovima Kompanija 1, <b><i>{prikaziPolje(poljaResenjeOdsustvo.adresa, "ADRESA")}</i></b> (naziv poslova na kojima imenovano lice radi), a na njegov lični zahtev – odobrava se odsustvo sa rada bez naknade zarade (neplaćeno odsustvo) u trajanju od <b><i>{prikaziPolje(poljaResenjeOdsustvo.periodOdsustva, "VREMENSKI PERIOD")}</i></b> (navesti vremenski period, npr. petnaest dana, tri meseca, jedne godine i slično), počev od {datumPotpisa} do {datumPotpisa}.
+          </div>
+          <div className="mb-6">
+            2. Zaposleni iz stava 1. dispozitiva ovog rešenja dužan je da se vrati na rad {datumPotpisa} godine.
+          </div>
+          <div className="mb-6">
+            3. Za vreme trajanja odsustva sa rada bez naknade zarade, zaposlenom miruju prava i obaveze iz radnog odnosa. (NAPOMENA: Rešenjem se mogu utvrditi određena prava i obaveze zaposlenog za koje je Zakonom, opštim aktom ili ugovorom o radu drukčije određeno i ta prava je potrebno uneti u dispozitiv rešenja).
+          </div>
+          <h4 className="text-xl font-bold text-center mb-4">Obrazloženje</h4>
+          <div className="mb-6">
+            Zaposleni <b><i>{prikaziPolje(poljaResenjeOdsustvo.zaposleni, "IME I PREZIME ZAPOSLENOG")}</i></b> (ime i prezime) se nalazi u radnom odnosu kod poslodavca Kompanija 1, <b><i>{prikaziPolje(poljaResenjeOdsustvo.adresa, "ADRESA")}</i></b> na <b><i>{prikaziPolje(poljaResenjeOdsustvo.odredjenoNeodredjeno, "ODREĐENO ILI NEODREĐENO")}</i></b> vreme, na poslovima <b><i>{prikaziPolje(poljaResenjeOdsustvo.nazivPoslova, "NAZIV POSLOVA")}</i></b>, a na osnovu ugovora o radu broj <b><i>{prikaziPolje(poljaResenjeOdsustvo.brojUgovora, "BROJ UGOVORA O RADU")}</i></b> od {datumPotpisa} godine.
+          </div>
+          <div className="mb-6">
+            Dana {datumPotpisa} godine, zaposleni je poslodavcu podneo zahtev za odsustvo sa rada bez naknade zarade (neplaćeno odsustvo) u kome je naveo razloge zbog kojih traži korišćenje odsustva. (Uz svoj zahtev, zaposleni može da priloži i odgovarajuću dokumentaciju kojom dokazuje razloge i osnov povodom kojih traži korišćenje neplaćenog odsustva, ali to ne predstavlja bitan uslov, već ima svrhu da poslodavac stekne objektivnu predstavu prema podnetom zahtevu).
+          </div>
+          <div className="mb-6">
+            Članom 78. Zakona predviđeno je da poslodavac može zaposlenom da odobri odsustvo bez naknade zarade (neplaćeno odsustvo). Za vreme neplaćenog odsustva zaposlenom miruju prava i obaveze iz radnog odnosa, ako za pojedina prava i obaveze zakonom, opštim aktom ugovorom o radu nije drukčije određeno. S obzirom da je ovlašćeno lice poslodavca konstatovalo da zaposleni iz stava 1. dispozitiva ovog rešenja ispunjava uslove predviđene članom 78. Zakona, te ne postoje nikakve smetnje da zaposlenom bude odobreno njegovo korišćenje, odlučeno je kao u dispozitivu.
+          </div>
+          <div className="mb-6 font-semibold">POUKA O PRAVNOM LEKU:</div>
+          <div className="mb-6">
+            Protiv ovog rešenja zaposleni može da pokrene radni spor pred nadležnim sudom u roku od 60 dana od dana njegovog dostavljanja.
+          </div>
+          <div className="mb-6">
+            <b><i>{prikaziPolje(poljaResenjeOdsustvo.lokacija, "MESTO", true)}</i></b>, dana {datumPotpisa} godine
+          </div>
+          <div className="flex justify-between w-full max-w-3xl mb-8">
+            <div></div>
+            <div className="text-right">
+              Ovlašćeno lice:<br />
+              <span className="inline-block border-t border-gray-400 w-60 mt-6 mb-2"></span><br />
+              <b><i>{prikaziPolje(poljaResenjeOdsustvo.ovlascenoLice, "OVLAŠĆENO LICE", true)}</i></b>
+            </div>
+          </div>
+          <div className="mb-2 font-semibold">Dostavljeno:</div>
+          <div className="mb-2">1. Zaposlenom</div>
+          <div className="mb-2">2. <b><i>{prikaziPolje(poljaResenjeOdsustvo.dostavljeno2, "DOSTAVLJENO 2", true)}</i></b></div>
+          <div className="mb-2">3. <b><i>{prikaziPolje(poljaResenjeOdsustvo.dostavljeno3, "DOSTAVLJENO 3", true)}</i></b></div>
+        </div>
+        <PoljaForm
+          open={showPoljaResenjeOdsustvo}
+          onClose={() => setShowPoljaResenjeOdsustvo(false)}
+          values={poljaResenjeOdsustvo}
+          onChange={v => setPoljaResenjeOdsustvo(v as PoljaResenjeOdsustvoFormValues)}
+          docType="resenje-odsustvo"
+        />
+      </div>
+    );
+  }
+
+  function ResenjeZamenaGodisnjiDynamic() {
+    const datum = formatDatum(poljaResenjeZamenaGodisnji.datum);
+    const datumPocetka = formatDatum(poljaResenjeZamenaGodisnji.datumPocetka);
+    const datumZavrsetka = formatDatum(poljaResenjeZamenaGodisnji.datumZavrsetka);
+    return (
+      <div className="flex flex-col items-center w-full">
+        <div className="flex justify-end w-full max-w-5xl mb-2 gap-2">
+          <button
+            className="flex items-center gap-2 bg-gray-400 hover:bg-gray-500 text-white font-semibold px-4 py-2 rounded transition"
+            onClick={() => setShowPoljaResenjeZamenaGodisnji(true)}
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            Polja
+          </button>
+          <button
+            className="flex items-center gap-2 bg-[#3A3CA6] hover:bg-[#23244d] text-white font-semibold px-4 py-2 rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => exportToPDF("Rešenje o zameni rešenja o korišćenju godišnjeg odmora zbog privremene sprečenosti za rad", setIsGeneratingPDF)}
+            disabled={isGeneratingPDF}
+          >
+            {isGeneratingPDF ? (
+              <svg className="animate-spin" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="31.416" strokeDashoffset="31.416">
+                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            ) : (
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9V4h12v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><rect x="6" y="13" width="12" height="7" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            )}
+            {isGeneratingPDF ? 'Generisanje...' : 'Izvoz'}
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow border border-[var(--border-color)] w-full max-w-4xl p-12 mt-2">
+          <h2 className="text-2xl font-bold text-center mb-8">REŠENJE O ZAMENI REŠENJA O KORIŠĆENJU GODIŠNJEG ODMORA ZBOG PRIVREMENE SPREČENOSTI ZA RAD</h2>
+          <div className="text-left font-semibold mb-4">
+            Kompanija 1, <i>{prikaziPolje(poljaResenjeZamenaGodisnji.adresa, "ADRESA", true)}</i><br />
+            <b>** {prikaziPolje(poljaResenjeZamenaGodisnji.broj, "BROJ", true)} **</b><br />
+            <b>** {prikaziPolje(poljaResenjeZamenaGodisnji.mesto, "MESTO", true)} </b>, {datum}
+          </div>
+          <div className="mb-6">
+            Na osnovu člana 69, člana 70. stav 3. i člana 192. Zakona o radu (&quot;Sl. glasnik RS&quot;, br. <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.zakon, "ZAKON")}</i></b> - dalje: Zakon), člana <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.clanZakona, "ČLAN ZAKONA")}</i></b> Kolektivnog ugovora kod poslodavca/Pravilnika o radu i člana <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.clanUgovora, "ČLAN UGOVORA")}</i></b> ugovora o radu, direktor/preduzetnik (ili drugi organ utvrđen zakonom ili opštim aktom poslodavca, ili drugo lice na osnovu ovlašćenja broj <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.brojOvlascenja, "BROJ OVLAŠĆENJA")}</i></b> od <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.direktor, "DIREKTOR / PREDUZETNIK")}</i></b>, direktora ili drugog organa utvrđenog zakonom ili opštim aktom poslodavca) donosi:
+          </div>
+          <h3 className="text-xl font-bold text-center mb-4">REŠENJE O ZAMENI REŠENJA O KORIŠĆENJU GODIŠNJEG ODMORA ZBOG PRIVREMENE SPREČENOSTI ZA RAD ZAPOSLENOG</h3>
+          <div className="mb-6">
+            1. Zaposlenom <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.zaposleni, "IME I PREZIME ZAPOSLENOG")}</i></b>, na poslovima <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.nazivPosla, "NAZIV POSLOVA")}</i></b>, odobrava se korišćenje neiskorišćenog dela godišnjeg odmora za 2025 godinu u ukupnom trajanju od {poljaResenjeZamenaGodisnji.trajanjeUDanima || 0} radnih dana u periodu od {datumPocetka} do {datumZavrsetka} godine.
+          </div>
+          <div className="mb-6">
+            2. Ovim rešenjem zamenjuje se rešenje poslodavca broj <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.brojResenja, "BROJ REŠENJA")}</i></b> od {datum} godine.
+          </div>
+          <div className="mb-6">
+            3. Za vreme odsustvovanja sa rada zbog korišćenja godišnjeg odmora zaposleni ima pravo na naknadu zarade u visini prosečne zarade u prethodnih 12 meseci, u skladu sa opštim aktom i ugovorom o radu.
+          </div>
+          <h4 className="text-xl font-bold text-center mb-4">Obrazloženje</h4>
+          <div className="mb-6">
+            Rešenjem direktora/preduzetnika (ili drugog organa utvrđenog zakonom ili opštim aktom poslodavca) broj <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.brojResenja, "BROJ REŠENJA")}</i></b> od {datum} godine - zaposlenom <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.zaposleni, "IME I PREZIME ZAPOSLENOG")}</i></b>, na poslovima <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.nazivPosla, "NAZIV POSLOVA")}</i></b> odobreno je korišćenje godišnjeg odmora za 2025. godinu u ukupnom trajanju od {poljaResenjeZamenaGodisnji.trajanjeUDanima || 0} radnih dana u periodu od {datumPocetka} do {datumZavrsetka} godine.
+          </div>
+          <div className="mb-6">
+            U toku korišćenja godišnjeg odmora, kod imenovanog je nastupila privremena sprečenost za rad u smislu propisa o zdravstvenom osiguranju, o čemu je kao dokaz priložio Potvrdu nadležnog lekara o privremenoj sprečenosti za rad broj <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.brojRada, "BROJ RADA")}</i></b> od 2025. godine, izdate u <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.mestoDomaZdravlja, "MESTO DOMA ZDRAVLJA")}</i></b> od strane izabrane ustanove medicine rada Doma zdravlja za broj <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.brojRada, "BROJ RADA")}</i></b> od 2025. godine.
+          </div>
+          <div className="mb-6">
+            Svojim zahtevom za izmenu rešenja o korišćenju godišnjeg odmora zbog privremene sprečenosti za rad koji je podneo poslodavcu dana {datum} godine, zaposleni je tražio da mu bude omogućeno da iskoristi neiskorišćeni deo godišnjeg odmora za 2025. godinu u ukupnom trajanju od {poljaResenjeZamenaGodisnji.trajanjeUDanima || 0} radnih dana i to u periodu od {datumPocetka} do {datumZavrsetka} godine.
+          </div>
+          <div className="mb-6">
+            Članom 70. stav 3. Zakona predviđeno je da ako je zaposleni za vreme korišćenja godišnjeg odmora privremeno sprečen za rad u smislu propisa o zdravstvenom osiguranju – ima pravo da po isteku te sprečenosti za rad nastavi sa korišćenjem godišnjeg odmora.
+          </div>
+          <div className="mb-6">
+            S obzirom da je u skladu sa navedenim propisom zaposleni stekao pravo da po isteku privremene sprečenosti za rad nastavi sa korišćenjem godišnjeg odmora, a da je članom 68. stav. 4. Zakona utvrđeno da zaposleni ne može da se odrekne prava na godišnji odmor, niti mu se to pravo može uskratiti ili zameniti novčanom naknadom, odlučeno je kao u dispozitivu.
+          </div>
+          <div className="mb-6 font-semibold">POUKA O PRAVNOM LEKU:</div>
+          <div className="mb-6">
+            Protiv ovog rešenja zaposleni ima pravo da pokrene spor pred nadležnim sudom, u roku od 60 dana od dana dostavljanja.
+          </div>
+          <div className="flex justify-between w-full max-w-3xl mb-8">
+            <div>
+              <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.mesto, "MESTO", true)}</i></b>, dana {datum} godine
+            </div>
+            <div className="text-right">
+              Direktor / preduzetnik:<br />
+              <span className="inline-block border-t border-gray-400 w-60 mt-6 mb-2"></span><br />
+              <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.direktor, "DIREKTOR / PREDUZETNIK", true)}</i></b>
+            </div>
+          </div>
+          <div className="mb-2 font-semibold">Dostavljeno:</div>
+          <div className="mb-2">1. Zaposlenom</div>
+          <div className="mb-2">2. <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.dostavljeno2, "DOSTAVLJENO 2", true)}</i></b></div>
+          <div className="mb-2">3. <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.dostavljeno3, "DOSTAVLJENO 3", true)}</i></b></div>
+        </div>
+        <PoljaForm
+          open={showPoljaResenjeZamenaGodisnji}
+          onClose={() => setShowPoljaResenjeZamenaGodisnji(false)}
+          values={poljaResenjeZamenaGodisnji}
+          onChange={v => setPoljaResenjeZamenaGodisnji(v as PoljaResenjeZamenaGodisnjiFormValues)}
+          docType="resenje-zamena-godisnji"
+        />
+      </div>
+    );
+  }
+
+  function UgovorORaduDynamic() {
+    const datumPotpisa = formatDatumSR(poljaUgovorORadu.datumPotpisa);
+    const datumPocetka = formatDatumSR(poljaUgovorORadu.datumPocetka);
+    const datumZavrsetka = formatDatumSR(poljaUgovorORadu.datumZavrsetka);
+    return (
+      <div className="flex flex-col items-center w-full">
+        <div className="flex justify-end w-full max-w-5xl mb-2 gap-2">
+          <button
+            className="flex items-center gap-2 bg-gray-400 hover:bg-gray-500 text-white font-semibold px-4 py-2 rounded transition"
+            onClick={() => setShowPoljaUgovorORadu(true)}
+          >
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            Polja
+          </button>
+          <button
+            className="flex items-center gap-2 bg-[#3A3CA6] hover:bg-[#23244d] text-white font-semibold px-4 py-2 rounded transition"
+            onClick={() => exportToPDF("Ugovor o radu", setIsGeneratingPDF)}
+            disabled={isGeneratingPDF}
+          >
+            {isGeneratingPDF ? (
+              <svg className="animate-spin" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeDasharray="31.416" strokeDashoffset="31.416">
+                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            ) : (
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 9V4h12v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><rect x="6" y="13" width="12" height="7" rx="2" stroke="currentColor" strokeWidth="2"/><path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            )}
+            {isGeneratingPDF ? 'Generisanje...' : 'Izvoz'}
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow border border-[var(--border-color)] w-full max-w-5xl p-8 mt-2">
+          {/* UVODNI DEO PO UZORU NA SLIKU */}
+          <div className="text-left mb-6">
+            Na osnovu članova 30. – 33. Zakona o radu Republike Srbije (&raquo;Službeni glasnik br. RS&laquo; 24/2005, 61/2005, 54/2009, 32/2013, 75/2014 i 13/2017-odluke US, 113/2017 i 95/2018 - autentično tumačenje&raquo;) , (u daljem tekstu: Zakon), i na osnovu Pravilnika o radu kod poslodavca {prikaziPolje(poljaUgovorORadu.kompanija, "KOMPANIJA", true)}, ugovorne strane:
+            <br /><br />
+            1. {prikaziPolje(poljaUgovorORadu.kompanija, "KOMPANIJA", true)}, <b> {prikaziPolje(poljaUgovorORadu.adresa, "ADRESA", true)} </b>, matični broj : <b> {prikaziPolje(poljaUgovorORadu.maticniBroj, "MATIČNI BROJ", true)} </b>, PIB: <b> {prikaziPolje(poljaUgovorORadu.pib, "PIB", true)} </b>, koga zastupa direktor <b><i> {prikaziPolje(poljaUgovorORadu.direktor, "IME I PREZIME DIREKTORA", true, true)} </i></b> (u daljem tekstu: Poslodavac) sa jedne strane i<br />
+            2. <b><i> {prikaziPolje(poljaUgovorORadu.zaposleni, "IME I PREZIME ZAPOSLENOG", true, true)} </i></b> iz <b><i> {prikaziPolje(poljaUgovorORadu.mestoRodjenja, "MESTO ROĐENJA ZAPOSLENOG", true, true)} </i></b>, <b><i> {prikaziPolje(poljaUgovorORadu.stepenStrucneSpreme, "STEPEN STRUČNE SPREME", true, true)} </i></b> stepen stručne spreme, po zanimanju <b> {prikaziPolje(poljaUgovorORadu.zanimanje, "ZANIMANJE", true)} </b> (u daljem tekstu: Zaposleni), sa druge strane dana {datumPotpisa} godine zaključuju:
+          </div>
+          <h2 className="text-3xl font-bold text-center mb-8">UGOVOR O RADU</h2>
+          <div className="text-center font-bold mb-2">Član 1.</div>
+          <div className="mb-4 text-justify">
+            Zaposleni je zasnovao radni odnos na <b><i> {prikaziPolje(poljaUgovorORadu.odredjenoNeodredjeno, "ODREĐENO ILI NEODREĐENO", true, true)} </i></b> vreme, sa probnim radom u trajanju od tri meseca i sa punim radnim vremenom u trajanju od 40 časova nedeljno, na poslovima <b><i> {prikaziPolje(poljaUgovorORadu.posao, "POSAO", true, true)} </i></b> koje će obavljati u sedištu Poslodavca u Beogradu, počev od {datumPocetka}, kada je dužan da stupi na rad, a najkasnije do {datumZavrsetka}.
+          </div>
+          <div className="text-center font-bold mb-2 mt-8">Član 2.</div>
+          <div className="mb-4 text-justify">
+            Zaposleni će na poslovima <b><i> {prikaziPolje(poljaUgovorORadu.posao, "POSAO", true, true)} </i></b> obavljati poslove za koje se zahteva <b><i> {prikaziPolje(poljaUgovorORadu.stepenStrucneSpreme, "STEPEN STRUČNE SPREME", true, true)} </i></b> stepen stručne spreme i odgovoran je za:
+            <ul className="list-disc text-left ml-8 mt-2">
+              <li>Materijalne i finansijske rezultate za poverenu robnu grupu, kategoriju po pitanju nabavke, zaliha, RUC-a</li>
+              <li>Predlog kompletnog asortimana za poverenu robnu grupu, u skladu sa strategijom i planovima kompanije,odluke o ulistavanju artikala</li>
+              <li>Učešće u godišnjim i periodičnim planovima nabavke za poverenu robnu grupu, planove budžeta, marži i vanrednih prihoda, te praćenje izvršenja planova</li>
+              <li>Kontaktiranje potencijalnih domaćih i ino-dobavljača, pripremu i pregovore oko komercijalnih uslova, koje treba ugovoriti, te predloge zaključivanja Ugovora sa dobavljačima (ili izmena postojećih Ugovora)</li>
+              <li>Praćenje ispunjavanja prava i obaveza iz komercijalnih ugovora i komercijalnih aranžmana, izveštavanje u vezi sa njima i rešavanje eventualnih neusaglašenosti</li>
+              <li>Kontaktiranje potencijalnih domaćih i ino-dobavljača, saglasno politici kompanije, a u vezi sa dogovoranjem i organizovanjem operativnih poslova (ulistavanja, izlistavanja, akcija, prikupljanja različitih vrsta saglasnosti, poručivanja robe, isporuke, plaćanja...)</li>
+              <li>Praćenje zaliha i asortimana robe u objektima MPO, kao i kupca kompanije i objektima veleprodaje</li>
+              <li>Praćenje prodajnih i finansijskih rezultata, kroz odgovarajuće periodične izveštaje, te predlaganje aktivnosti ukoliko ima potrebe za korekcijom istih (unutar sektora CM-a ili unutar čitave kompanije)</li>
+              <li>Utvrđivanje optimalnog stanja zaliha poverene robne grupe, u skladu sa planovima kompanije i vođenje računa o adekvatnom stanju zaliha (prema planovima kompanije)</li>
+              <li>Analizu starosnih zaliha i pokretanje akcija za smanjenje starosti zaliha</li>
+              <li>Analizu cenovnika, na osnovu preporučenih cena, tržišne situacije i planova kompanije, te nadgledanje procesa izmena cenovnika</li>
+              <li>Definisanje i promene prodajnih cena u skladu sa usvojenom cenovnom strategijom</li>
+              <li>Odluku o definisanju akcijskih proizvoda</li>
+              <li>Praćenje trendova na tržištu, analizu tržišta, ponašanja potrošača, kao i aktivnosti konkurencije, te prepoznavanje područja u kojima postoji potencijal i prilika za rast i u skladu sa tim preduzima potrebne mere za razvoj poverene kategorije</li>
+              <li>Upravljanje asortimanom poverene robne grupe u različitim kanalima prodaje unutar kompanije</li>
+              <li>Stanje lagera i magacina</li>
+              <li>Učestvovanje u popisima</li>
+              <li>Definisanje lay-outa za različite kategorije MPO, kao i sve izmene u vezi sa istim.</li>
+              <li>Obilaske MPO, kako bi se uverio o pozicioniranosti poverenih kategorija za koje je zadužen, razmenu informacija sa zaposlenima u maloprodaji radi dobijanja realne i aktuelne slike &quot;sa terena&quot;</li>
+              <li>Osmišljavanje, izradu i distribuciju izveštaja u vezi sa svojim radom, radom svoje organizacione jedinice, kao i svim aspektima poslova koje obavlja, a u skladu sa dinamikom i temama dogovorenim sa nadređenim</li>
+              <li>Praćenje inovacija, trendova, tržišnih dešavanja u svom domenu posla, te analizu istih i razmatranje implementacije istih u poslovanje kompanije</li>
+              <li>Stalnu otvorenost za sticanje novih i nadogradnju postojećih znanja i veština, kao i spremnost i angažovanje da sopstvena znanja prenese kolegama i novozaposlenima</li>
+              <li>Pridržavanje internih pravila u radu, kroz poznavanje i poštovanje odredbi različitih procedura, pravilnika, odluka itd, relevantnih za oblast rada zaposlenog, kao i davanje predloga za poboljšanje i unapređenje svih internih pravila rada i poslovanja</li>
+              <li>Obezbeđivanje uslova za primenu i pridržavanje mera BZNR, ZOP</li>
+              <li>Obavljanje i ostalih poslova po nalogu nadređenog</li>
+            </ul>
+            <br />Za izvršenje poslova Zaposleni je neposredno odgovoran <b><i> {prikaziPolje(poljaUgovorORadu.odgovornost, "ODGOVORNOST", true, true)} </i></b>.
+            <div className="mb-4 text-justify">
+              Zaposleni je odgovoran za redovno obavljanje poslova u delokrugu poslova iz prethodnog stava ovog člana, a naročito je dužan da: savesno, kvalitetno i u predviđenim rokovima obavlja poslove na koje je raspoređen; da postupa u skladu sa propisima i ustaljenim normama radne discipline; da ne narušava međuljudske odnose; da se prema imovini Poslodavca ponaša pažnjom dobrog domaćina i da ne koristi imovinu Poslodavca u ličnom interesu; da ne koristi povlašćene informacije kod Poslodavca za lično bogaćenje; da ne zloupotrebljava poziciju kod Poslodavca za lično bogaćenje; da ne koristi poslovne mogućnosti Poslodavca za svoje lične potrebe; da postupa u skladu sa odlukama i naredbama organa upravljanja i nadležnih rukovodilaca.
+              <br /><br />
+              Poslodavac se obavezuje da pre stupanja Zaposlenog na rad podnese propisane prijave na obavezno socijalno osiguranje i da blagovremeno uplaćuje doprinose za penzijsko-invalidsko, zdravstveno osiguranje i osiguranje za slučaj nezaposlenosti.
+              <br /><br />
+              Zaposleni u slučaju potrebe procesa rada može biti premešten na drugo radno mesto, odnosno drugo mesto rada u skladu sa Zakonom, Pravilnikom o radu i drugim opštim aktima.
+              <br /><br />
+              Poslodavac može da odobri Zaposlenom rad od kuće. U slučaju rada od kuće, nadzor nad radom Zaposlenog vršiće neposredno nadređeni korišćenjem odgovarajućih aplikacija. U navedenom slučaju, sredstva za rad od kuće i opremu obezbeđuje Poslodavac.
+            </div>
+          </div>
+          <div className="text-center font-bold mb-2 mt-8">Član 3.</div>
+          <div className="mb-4 text-justify">Zaposleni se obavezuje da poštuje raspored rada kod Poslodavca u pogledu dnevnog i nedeljnog radnog vremena.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 4.</div>
+          <div className="mb-4 text-justify">Zarada Zaposlenog za obavljeni rad i vreme provedeno na radu, sastoji se od osnovne zarade, uvećane zarade i dela zarade za radni učinak. Osnovna mesečna Zarada Zaposlenog za obavljeni rad i puno radno vreme provedeno na radu, uz standardni radni učinak, iznosi BRUTO I <b><i> {prikaziPolje(poljaUgovorORadu.plata, "ZARADA", true, true)} </i></b> dinara.<br /><br />Poslodavac je dužan da jednom mesečno, u skladu sa Ugovorom, isplati zbir iznosa iz stava 2 i stava 3 ovog člana.<br /><br />Zarada Zaposlenog je tajna. Odavanje podataka o iznosu isplaćene zarade predstavlja povredu poslovne tajne.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 5.</div>
+          <div className="mb-4 text-justify">Zaposleni, ima pravo na uvećanu zaradu saglasno Zakonu i Pravilniku o radu i to:<br />1) Za rad na dan praznika koji je neradni dan - 110% od osnovice;<br />2) Za rad noću, ako takav rad nije vrednovan pri utvrđivanju osnovne zarade - 26% od osnovice;<br />3) Za prekovremeni rad - 26% od osnovice;<br />4) po osnovu vremena provedenog na radu za svaku punu godinu rada ostvarenu u radnom odnosu kod Poslodavca, ili sa njim povezanog lica, kao i u slučaju rada kod poslodavca prethodnika čiji je sledbenik Poslodavac na osnovu statusne promene ili promene nakon koje je Poslodavac postao pravni sledbenik poslodavca preuzimajući istovremeno i sve ugovore o radu koji su važeći na dan promene u skladu sa članom 147 Zakona - 0,4% od osnovice. Osnovicu za obračun uvećane zarade čini poslednja ugovorena osnovna bruto zarada, utvrđena u skladu sa Zakonom, opštim aktom i Ugovorom o radu.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 6.</div>
+          <div className="mb-4 text-justify">Zarada, naknade zarada i troškova isplaćuju se jednom mesečno i to do kraja tekućeg meseca za prethodni mesec. Poslodavac i Zaposleni visinu osnovne zarade mogu menjati zaključenjem aneksa Ugovora o radu, a u skladu sa Zakonom i opštim aktima Poslodavca.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 7.</div>
+          <div className="mb-4 text-justify">
+            Zaposleni ima pravo na naknadu zarade u visini prosečne zarade za prethodnih 12 meseci za vreme odsustvovanja sa rada na dan praznika koji je neradni dan, godišnjeg odmora, plaćenog odsustva, vojne vežbe i odazivanja na poziv državnog organa.<br /><br />
+            Zaposleni ima pravo na naknadu zarade za vreme odsustvovanja sa rada zbog privremene sprečenosti za rad do 30 dana i to:
+            <ul style={{marginLeft: '1em'}}>
+              <li>U visini 65% prosečne zarade za prethodnih 12 meseci pre meseca u kojem je nastupila privremena sprečenost za rad prouzrokovana bolešću ili povredom van rada;</li>
+              <li>U visini 100% prosečne zarade za prethodnih 12 meseci pre meseca u kojem je nastupila privremena sprečenost za rad prouzrokovana povredom na radu ili profesionalnom bolešću;</li>
+            </ul>
+            Zaposleni ima pravo na naknadu zarade u visini 60% prosečne zarade za prethodnih 12 meseci za vreme prekida rada do kojeg je došlo bez krivice Zaposlenog, najduže 45 radnih dana u kalendarskoj godini.
+          </div>
+          <div className="text-center font-bold mb-2 mt-8">Član 8.</div>
+          <div className="mb-4 text-justify">Zaposleni je obavezan da, najkasnije u roku od 3 dana nakon nastupanja privremene sprečenosti za rad, a shodno propisima o zdravstvenom osiguranju, dostavi, u skladu sa Pravilnikom o radu,<br /><br />Poslodavcu potvrdu lekara koja sadrži i vreme očekivane sprečenosti za rad.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 9.</div>
+          <div className="mb-4 text-justify">Zaposleni ima pravo na naknadu troškova:<br /><br />- Za dolazak i odlazak sa rada u visini cene prevozne karte u javnom saobraćaju, ukoliko Poslodavac nije na drugi način obezbedio troškove prevoza Zaposlenog;<br />- vreme provedeno na službenom putu u skladu sa odlukom Poslodavca;<br />- smeštaja i ishrane za rad i boravak na terenu u skladu sa odobrenim budžetom, ako Poslodavac nije Zaposlenom obezbedio smeštaj i ishranu bez naknade;<br />- Za ishranu u toku rada u iznosu od <b> {prikaziPolje(poljaUgovorORadu.nadoknadaZaIshranu, "NADOKNADA ZA ISHRANU", true)} </b> dinara BRUTO;<br />- Za regres za korišćenje godišnjeg odmora u iznosu od <b> {prikaziPolje(poljaUgovorORadu.regresZaGodisnji, "REGRES ZA KORIŠĆENJE GODIŠNJEG ODMORA", true)} </b> dinara BRUTO;</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 10.</div>
+          <div className="mb-4 text-justify">Zaposleni ima pravo na odmor u toku dnevnog rada, dnevni odmor, nedeljni odmor i godišnji odmor u skladu sa Ugovorom o radu, Zakonom i Pravilnikom o radu.<br /><br />Zaposleni sa jednokratnim punim radnim vremenom tokom radnog dana ima pravo na odmor u trajanju od 30 minuta.<br /><br />Odmor iz stava 2. ovog člana uračunat je u radno vreme.<br /><br />Odmor u toku dnevnog rada, ne može da se koristi na početku i na kraju radnog vremena, a organizuje se na način kojim se obezbeđuje da se kontinuitet u radnom procesu ne prekida, ako priroda posla ne dozvoljava prekid rada, kao i ako se radi sa strankama.<br /><br />Odluku o rasporedu korišćenja odmora u toku dnevnog rada donosi Poslodavac ili zaposleni koga Poslodavac ovlasti.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 11.</div>
+          <div className="mb-4 text-justify">Zaposleni ima pravo na odmor između dva uzastopna radna dana u trajanju predviđenom odredbama Zakona o radu.<br /><br />Zaposleni ima pravo na nedeljni odmor u trajanju od najmanje 24 časa neprekidno.<br /><br />Ako je neophodno da Zaposleni radi na dan svog nedeljnog odmora, Poslodavac će da mu obezbedi odmor u trajanju od najmanje 24 časa neprekidno u toku naredne nedelje.<br /><br />Radni dan, po pravilu, traje 8 časova dnevno, a radna nedelja, po pravilu, 5 radnih dana.<br /><br />Poslodavac može, u skladu sa svojom organizacijom rada, predvideti drugačiji raspored radne nedelje i raspored radnog vremena, s tim da ukupno radno vreme bude 40 časova nedeljno.<br /><br />Radno vreme Zaposlenih može biti jednokratno, a rad se može organizovati i u smenama.<br /><br />Zaposleni ima pravo na godišnji odmor u skladu sa Zakonom i Pravilnikom o radu.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 12.</div>
+          <div className="mb-4 text-justify">Radni odnos zasnovan između Poslodavca i zaposlenog može prestati:<br /><br />1. istekom roka na koji je radni odnos zasnovan,<br />2. kad zaposleni navrši 65 godina života i najmanje 15 godina staža osiguranja, ako se Poslodavac i zaposleni drugačije ne sporazumeju,<br />3. sporazumom između zaposlenog i Poslodavca,<br />4. otkazom ugovora o radu od strane Poslodavca ili zaposlenog,<br />5. na zahtev roditelja ili staratelja zaposlenog mlađeg od 18 godina života,<br />6. smrću zaposlenog,<br />7. u drugim slučajevima propisanim važećim zakonima Republike Srbije.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 13.</div>
+          <div className="mb-4 text-justify">Zaposlenom prestaje radni odnos nezavisno od njegove volje i volje Poslodavca:<br /><br />1. ako je na način propisan Zakonom utvrđeno da je kod zaposlenog došlo do gubitka radne sposobnosti - danom dostavljanja pravnosnažnog rešenja o utvrđivanju gubitka radne sposobnosti,<br />2. ako mu je, po odredbama zakona, odnosno pravnosnažnoj odluci suda ili drugog organa, zabranjeno da obavlja određene poslove, a ne može da mu se obezbedi obavljanje drugih poslova - danom dostavljanja pravnosnažne odluke,<br />3. ako zbog izdržavanja kazne zatvora mora da bude odsutan sa rada u trajanju dužem od šest meseci - danom stupanja na izdržavanje kazne,<br />4. ako mu je izrečena mera bezbednosti, vaspitna ili zaštitna mera u trajanju dužem od šest meseci i zbog toga mora da bude odsutan sa rada - danom početka primenjivanja te mere,<br />5. u slučaju prestanka rada Poslodavca, u skladu sa Zakonom.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 14.</div>
+          <div className="mb-4 text-justify">Radni odnos može da prestane na osnovu pisanog sporazuma Poslodavca i zaposlenog. Pre potpisivanja sporazuma, Poslodavac je dužan da zaposlenog pisanim putem obavesti o posledicama do kojih dolazi u ostvarivanju prava za slučaj nezaposlenosti.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 15.</div>
+          <div className="mb-4 text-justify">Zaposleni ima pravo da Poslodavcu otkaže ugovor o radu. Otkaz ugovora o radu zaposleni dostavlja Poslodavcu u pisanom obliku, 30 dana pre dana koji je zaposleni naveo kao dan prestanka radnog odnosa (otkazni rok).</div>
+
+          <div className="text-center font-bold mb-2 mt-8">Član 16.</div>
+          <div className="mb-4 text-justify">
+            Poslodavac može da otkaže ugovor o radu zaposlenom ako za to postoji opravdani razlog koji se odnosi na radnu sposobnost zaposlenog, njegovo ponašanje i potrebe Poslodavca, i to:
+            <ol className="list-decimal ml-8 mt-2">
+              <li>ako ne ostvaruje rezultate rada ili nema potrebna znanja i sposobnosti za obavljanje poslova na kojima radi;</li>
+              <li>ako je pravosnažno osuđen za krivično delo na radu ili u vezi sa radom;</li>
+              <li>ako se zaposleni ne vrati na rad kod Poslodavca u roku od 15 dana od dana isteka roka za neplaćeno odsustvo ili mirovanje radnog odnosa.</li>
+            </ol>
+            <br />
+            Zaposlenom može da prestane radni odnos ako za to postoji opravdan razlog koji se odnosi na potrebe Poslodavca i to:
+            <ol className="list-decimal ml-8 mt-2">
+              <li>ako usled tehnoloških, ekonomskih ili organizacionih promena prestane potreba za obavljanjem određenog posla ili dođe do smanjenja obima posla;</li>
+              <li>ako odbije zaključenje aneksa ugovora skladu sa odredbama Pravilnika o radu i Zakona.</li>
+            </ol>
+          </div>
+          <div className="text-center font-bold mb-2 mt-8">Član 17.</div>
+          <div className="mb-4 text-justify">Poslodavac može da otkaže ugovor o radu zaposlenom ako teže povredi radne obaveze i to usled:<br /><br />1. neizvršavanja i/ili nesavesnog, neblagovremenog i nemarnog izvršavanja radnih obaveza i poslova utvrđenih ugovorom o radu;<br />2. zloupotrebe položaja i prekoračenja svojih ovlašćenja;<br />3. odavanja poslovne, službene ili druge tajne utvrđene Zakonom, ovim Pravilnikom ili drugim aktom Poslodavca, odnosno pokušaj odavanja podataka koji predstavljaju poslovnu tajnu, službenu ili drugu tajnu;<br />4. neovlašćeno davanje izjava u vezi sa radom sredstvima javnog informisanja;<br />5. nesavestan, nemaran i neodgovoran odnos prema imovini Poslodavca ili trećih lica odnosno klijenata i poslovnih partnera Poslodavca, koja mu je poverena (sredstva i predmeti rada);<br />6. neprijavljivanje nastale ili potencijalne štete Poslodavcu;<br />7. krađa, pokušaj krađe, utaja ili pronevera imovine Poslodavca kao i učestvovanje ili pomaganje u istom;<br />8. krađa, pokušaj krađe, utaja ili pronevera imovine klijenata i/ili poslovnih partnera Poslodavca, kao i učestvovanje ili pomaganje u istom;<br />9. korišćenje imovine Poslodavca, klijenata i/ili poslovnog partnera u privatne svrhe;<br />10. povrede klauzule zabrane konkurencije i povreda prava konkurencije;<br />11. neuredno držanje dokumentacije ili drugih sredstava rada, što je dovelo do zastoja u procesu rada;<br />12. davanje netačnih ili neproverenih podataka kada je to uticalo na donošenje odluke organa Poslodavca ili prikrivanje podataka, obaveštenja i drugih informacija koje su bitne za funkcionisanje Poslodavca;<br />13. svesno zaključivanje nepovoljnih i/ili štetnih ugovora ili davanje pogrešnih i nepotpunih podataka koji su uticali na zaključivanje takvih ugovora;<br />14. davanje i primanje mita u vezi sa radom;<br />15. rukovanje novcem i hartijama od vrednosti suprotno aktima i uputstvima Poslodavca i važećim propisima;<br />16. neprijavljivanje promena, odnosno davanje netačnih podataka o adresi prebivališta odnosno boravišta, kada zbog toga nastupe štetne posledice za Poslodavca;<br />17. politička agitacija kod Poslodavca (deljenje programa, letaka ili drugog materijala političkih stranaka i drugih političkih organizacija i sl.);<br />18. zloupotreba dnevnica za službena putovanja;<br />19. zloupotreba platnih kartica i drugih sredstava Poslodavca;<br />20. povrede koje se odnose na kršenje odredbi procedura, pravilnika, uputstava Poslodavca;<br />21. odbijanje zaposlenog da postupi po nalogu neposrednog rukovodioca, ako je nalog u vezi sa poslovima za koje je zaključio ugovor o radu;<br />22. ako neprikladno i neodgovorno koristi sredstva za rad;<br />23. ako ne koristi ili nenamenski koristi obezbeđena sredstva ili opremu za ličnu zaštitu na radu;<br />24. ako ponašanje zaposlenog predstavlja radnju izvršenja krivičnog dela učinjenog na radu i u vezi sa radom, nezavisno od toga da li je protiv zaposlenog pokrenut krivični postupak;<br />25. ako zaposleni vrši zlostavljanje ili zloupotrebljava pravo na zaštitu od zlostavljanja;<br />26. ako zaposleni odbije zahtev Poslodavca za učešće u procesu obrazovanja i stručnog usavršavanja;<br />27. u slučaju kada se za vreme pasivnog dežurstva zaposlenog javi potreba da zaposleni bude radno angažovan, a isti se ne odazove na poziv u skladu odlukom Poslodavca o pasivnom dežurstvu.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 18.</div>
+          <div className="mb-4 text-justify">Zaposlenom koji ne poštuje radnu disciplinu odnosno čije je ponašanje takvo da ne može da nastavi rad kod Poslodavca, Poslodavac može da otkaže ugovor o radu, a naročito u sledećim slučajevima:<br /><br />1. netačno evidentiranje i prikazivanje rezultata rada;<br />2. ometanje zaposlenih u procesu rada, čime se remeti izvršenje njihovih radnih obaveza;<br />3. odbijanje saradnje ili nedolično ponašanje prema zaposlenima kod Poslodavca, drugim licima angažovanim kod Poslodavca i/ili strankama kao što su svađa, psovke, nepristojno obraćanje, kleveta, uvreda i slično;<br />4. izazivanje nereda ili tuče, kao i učestvovanje u tuči kod Poslodavca;<br />5. obavljanje ličnih (privatnih) poslova u radno vreme;<br />6. neizvršavanje poslova u vreme štrajka radi obezbeđivanja minimuma procesa rada;<br />7. nerazduživanje sredstava za rad za vreme dužeg odsustvovanja sa posla;<br />8. ako ne dostavi potvrdu o privremenoj sprečenosti za rad u roku od 3 dana od nastupanja sprečenosti za rad;<br />9. ako zloupotrebi pravo na odsustvo zbog privremene sprečenosti za rad;<br />10. ako se zaposleni ne vrati na rad kod Poslodavca u roku od 15 dana od dana isteka roka za neplaćeno odsustvo ili mirovanje radnog odnosa;<br />11. kocka se ili puši u prostorijama Poslodavca, spava u toku radnog vremena;<br />12. dolazi na rad pod dejstvom alkohola ili drugih opojnih sredstava, odnosno upotrebe alkohola ili drugih opojnih sredstava u toku radnog vremena;<br />13. ako je dao netačne podatke koji su bili odlučujući za zasnivanje radnog odnosa;<br />14. ako zaposleni koji radi na poslovima sa povećanim rizikom, na kojima je kao poseban uslov za rad utvrđena posebna zdravstvena sposobnost, odbije da bude podvrgnut oceni zdravstvene sposobnosti;<br />15. ako ne poštuje radnu disciplinu propisanu aktom Poslodavca, odnosno ako je njegovo ponašanje takvo da ne može da nastavi rad kod Poslodavca;<br />16. neopravdano zakasni na posao tri puta u toku meseca ili ukupno pet puta u kalendarskoj godini; ili odlazak sa posla pre isteka radnog vremena više od tri puta u toku jednog meseca, odnosno pet puta u toku godine;<br />17. neopravdano izostane sa posla tri radna dana u toku kalendarske godine;<br />18. neuredno održava prostor u kome su smeštene stvari, roba, dokumentacija i dr., a što ima za posledicu oštećenje stvari, robe, dokumentacije i dr.<br />19. postupanje zaposlenog koje vodi narušavanju ugleda Poslodavca, kao i postupanje zaposlenog koje za posledicu ima narušen poslovni ugled Poslodavca.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 19.</div>
+          <div className="mb-4 text-justify">Zaposleni je obavezan da u slučaju prestanka radnog odnosa Poslodavcu odmah preda sav pribor i opremu kojom je zadužen, sve projekte na kojima je radio kao i svu poslovnu i drugu dokumentaciju Poslodavca u čijem se posedu nalazi.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 20.</div>
+          <div className="mb-4 text-justify">Zaposleni je dužan da kvalitetno izvrši primopredaju dužnosti novom licu na tom radnom mestu i isto uputi u sve poslove koje je obavljao za Poslodavca tokom svog rada.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 21.</div>
+          <div className="mb-4 text-justify">Poslodavac se obavezuje da obezbedi i sprovodi zaštitu na radu u skladu sa zakonom i opštim aktima poslodavca, a Zaposleni je dužan da se pridržava propisanih mera zaštite na radu.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 22.</div>
+          <div className="mb-4 text-justify">Zaposleni potvrđuje da je upoznat sa sadržinom Pravilnika o radu i svih ostalih opštih akata Poslodavca, te da ga je Poslodavac obavestio o poslu, uslovima rada, pravima i obavezama iz radnog odnosa, kako je to predviđeno odredbama Zakona o radu i Pravilnikom o radu. Poslodavac se obavezuje da omogući Zaposlenom ostvarivanje prava propisanih Pravilnikom o radu.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 23.</div>
+          <div className="mb-4 text-justify">Zaposleni je odgovoran za štetu koju na radu ili u vezi sa radom, namerno ili iz krajnje nepažnje prouzrokovao Poslodavcu. Zaposleni je dužan da Poslodavcu nadoknadi štetu koju je namerno ili krajnjom nepažnjom prouzrokovao trećem licu, a koju je nadoknadio Poslodavac.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 24.</div>
+          <div className="mb-4 text-justify">Na prava i obaveze koja nisu utvrđena ovim Ugovorom o radu primenjivaće se odgovarajuće odredbe Zakona o radu i Pravilnika o radu.</div>
+          <div className="text-center font-bold mb-2 mt-8">Član 25.</div>
+          <div className="mb-4 text-justify">Ovaj Ugovor o radu je sačinjen u tri primerka od kojih jedan zadržava Zaposleni, a dva Poslodavac.</div>
+          <div className="flex justify-between w-full max-w-3xl mt-8">
+            <div>
+              Zaposleni:<br />
+              <span className="inline-block border-t border-gray-400 w-60 mt-6"></span>
+            </div>
+            <div className="text-right">
+              Za poslodavca:<br />
+              <span className="inline-block border-t border-gray-400 w-60 mt-6"></span><br />
+              Direktor <b> {prikaziPolje(poljaUgovorORadu.direktor, "IME I PREZIME DIREKTORA")} </b>
+            </div>
+          </div>
+        </div> {/* <-- This closes the main content card */}
+        <PoljaForm
+          open={showPoljaUgovorORadu}
+          onClose={() => setShowPoljaUgovorORadu(false)}
+          values={poljaUgovorORadu}
+          onChange={v => setPoljaUgovorORadu({ ...v } as PoljaUgovorORaduFormValues)}
+          docType="ugovor-o-radu"
+        />
+      </div> /* <-- This closes the UgovorORaduDynamic wrapper div */
+    );
+  }
+
   return (
     <div className="p-6 bg-[var(--main-bg)] min-h-screen">
       {/* Naslov sa ikonicom */}
@@ -289,7 +842,7 @@ export default function KorisniciDokumenti() {
             </button>
             {openIndex === idx && (
               <div className="px-0 pb-8 animate-fade-in">
-                {idx === 0 ? <PlanGodisnjegOdmoraDynamic /> : idx === 1 ? <UgovorVoziloDynamic /> : <div className="p-6 text-[var(--text-secondary)] text-base">Nema podataka za ovaj dokument.</div>}
+                {idx === 0 ? <PlanGodisnjegOdmoraDynamic /> : idx === 1 ? <UgovorVoziloDynamic /> : idx === 2 ? <ResenjeOdsustvoDynamic /> : idx === 3 ? <ResenjeZamenaGodisnjiDynamic /> : idx === 4 ? <UgovorORaduDynamic /> : <div className="p-6 text-[var(--text-secondary)] text-base">Nema podataka za ovaj dokument.</div>}
               </div>
             )}
           </div>
@@ -306,4 +859,4 @@ export default function KorisniciDokumenti() {
       `}</style>
     </div>
   );
-} 
+}
