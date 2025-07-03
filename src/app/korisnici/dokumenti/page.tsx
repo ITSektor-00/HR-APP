@@ -4,7 +4,7 @@ import { useState } from "react";
 import PoljaForm from "./PoljaForm";
 import type { PoljaPlanFormValues, PoljaUgovorVoziloFormValues, PoljaResenjeOdsustvoFormValues, PoljaResenjeZamenaGodisnjiFormValues, PoljaUgovorORaduFormValues } from "./PoljaForm";
 // TypeScript fix for html2pdf.js
-// @ts-ignore
+// @ts-expect-error - html2pdf.js doesn't have proper TypeScript definitions
 import html2pdf from 'html2pdf.js';
 
 const documents = [
@@ -90,7 +90,6 @@ const exportToPDF = (documentTitle: string, setIsGeneratingPDF: (loading: boolea
         orientation: 'portrait' 
       }
     };
-    // @ts-ignore
     html2pdf().set(opt).from(tempContainer).save().then(() => {
       document.body.removeChild(tempContainer);
       buttonsToHide.forEach((btn, index) => {
@@ -469,7 +468,7 @@ export default function KorisniciDokumenti() {
             <b>** {prikaziPolje(poljaResenjeOdsustvo.lokacija, "MESTO", true)} </b>, {datum}
           </div>
           <div className="mb-6">
-            Na osnovu čl. 78. i 192. Zakona o radu ("Sl. glasnik RS", <b><i>{prikaziPolje(poljaResenjeOdsustvo.clanZakona, "ZAKON")}</i></b> - dalje: Zakon) <b><i>NADLEŽNI ORGAN</i></b> (navesti nadležni organ kod poslodavca, odnosno lice utvrđeno zakonom ili osnivačkim ili drugim opštim aktom poslodavca ili lice koje su oni ovlastili – dalje: ovlašćeno lice) Kompanija 1, <b><i>{prikaziPolje(poljaResenjeOdsustvo.adresa, "ADRESA")}</i></b> (navesti naziv i sedište poslodavca) donosi:
+            Na osnovu čl. 78. i 192. Zakona o radu (&quot;Sl. glasnik RS&quot;, <b><i>{prikaziPolje(poljaResenjeOdsustvo.clanZakona, "ZAKON")}</i></b> - dalje: Zakon) <b><i>NADLEŽNI ORGAN</i></b> (navesti nadležni organ kod poslodavca, odnosno lice utvrđeno zakonom ili osnivačkim ili drugim opštim aktom poslodavca ili lice koje su oni ovlastili – dalje: ovlašćeno lice) Kompanija 1, <b><i>{prikaziPolje(poljaResenjeOdsustvo.adresa, "ADRESA")}</i></b> (navesti naziv i sedište poslodavca) donosi:
           </div>
           <h3 className="text-xl font-bold text-center mb-4">REŠENJE</h3>
           <div className="mb-6">
@@ -562,7 +561,7 @@ export default function KorisniciDokumenti() {
             <b>** {prikaziPolje(poljaResenjeZamenaGodisnji.mesto, "MESTO", true)} </b>, {datum}
           </div>
           <div className="mb-6">
-            Na osnovu člana 69, člana 70. stav 3. i člana 192. Zakona o radu ("Sl. glasnik RS", br. <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.zakon, "ZAKON")}</i></b> - dalje: Zakon), člana <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.clanZakona, "ČLAN ZAKONA")}</i></b> Kolektivnog ugovora kod poslodavca/Pravilnika o radu i člana <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.clanUgovora, "ČLAN UGOVORA")}</i></b> ugovora o radu, direktor/preduzetnik (ili drugi organ utvrđen zakonom ili opštim aktom poslodavca, ili drugo lice na osnovu ovlašćenja broj <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.brojOvlascenja, "BROJ OVLAŠĆENJA")}</i></b> od <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.direktor, "DIREKTOR / PREDUZETNIK")}</i></b>, direktora ili drugog organa utvrđenog zakonom ili opštim aktom poslodavca) donosi:
+            Na osnovu člana 69, člana 70. stav 3. i člana 192. Zakona o radu (&quot;Sl. glasnik RS&quot;, br. <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.zakon, "ZAKON")}</i></b> - dalje: Zakon), člana <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.clanZakona, "ČLAN ZAKONA")}</i></b> Kolektivnog ugovora kod poslodavca/Pravilnika o radu i člana <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.clanUgovora, "ČLAN UGOVORA")}</i></b> ugovora o radu, direktor/preduzetnik (ili drugi organ utvrđen zakonom ili opštim aktom poslodavca, ili drugo lice na osnovu ovlašćenja broj <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.brojOvlascenja, "BROJ OVLAŠĆENJA")}</i></b> od <b><i>{prikaziPolje(poljaResenjeZamenaGodisnji.direktor, "DIREKTOR / PREDUZETNIK")}</i></b>, direktora ili drugog organa utvrđenog zakonom ili opštim aktom poslodavca) donosi:
           </div>
           <h3 className="text-xl font-bold text-center mb-4">REŠENJE O ZAMENI REŠENJA O KORIŠĆENJU GODIŠNJEG ODMORA ZBOG PRIVREMENE SPREČENOSTI ZA RAD ZAPOSLENOG</h3>
           <div className="mb-6">
@@ -655,7 +654,7 @@ export default function KorisniciDokumenti() {
         <div className="bg-white rounded-lg shadow border border-[var(--border-color)] w-full max-w-5xl p-8 mt-2">
           {/* UVODNI DEO PO UZORU NA SLIKU */}
           <div className="text-left mb-6">
-            Na osnovu članova 30. – 33. Zakona o radu Republike Srbije (»Službeni glasnik br. RS« 24/2005, 61/2005, 54/2009, 32/2013, 75/2014 i 13/2017-odluke US, 113/2017 i 95/2018 - autentično tumačenje«) , (u daljem tekstu: Zakon), i na osnovu Pravilnika o radu kod poslodavca {prikaziPolje(poljaUgovorORadu.kompanija, "KOMPANIJA", true)}, ugovorne strane:
+            Na osnovu članova 30. – 33. Zakona o radu Republike Srbije (&raquo;Službeni glasnik br. RS&laquo; 24/2005, 61/2005, 54/2009, 32/2013, 75/2014 i 13/2017-odluke US, 113/2017 i 95/2018 - autentično tumačenje&raquo;) , (u daljem tekstu: Zakon), i na osnovu Pravilnika o radu kod poslodavca {prikaziPolje(poljaUgovorORadu.kompanija, "KOMPANIJA", true)}, ugovorne strane:
             <br /><br />
             1. {prikaziPolje(poljaUgovorORadu.kompanija, "KOMPANIJA", true)}, <b> {prikaziPolje(poljaUgovorORadu.adresa, "ADRESA", true)} </b>, matični broj : <b> {prikaziPolje(poljaUgovorORadu.maticniBroj, "MATIČNI BROJ", true)} </b>, PIB: <b> {prikaziPolje(poljaUgovorORadu.pib, "PIB", true)} </b>, koga zastupa direktor <b><i> {prikaziPolje(poljaUgovorORadu.direktor, "IME I PREZIME DIREKTORA", true, true)} </i></b> (u daljem tekstu: Poslodavac) sa jedne strane i<br />
             2. <b><i> {prikaziPolje(poljaUgovorORadu.zaposleni, "IME I PREZIME ZAPOSLENOG", true, true)} </i></b> iz <b><i> {prikaziPolje(poljaUgovorORadu.mestoRodjenja, "MESTO ROĐENJA ZAPOSLENOG", true, true)} </i></b>, <b><i> {prikaziPolje(poljaUgovorORadu.stepenStrucneSpreme, "STEPEN STRUČNE SPREME", true, true)} </i></b> stepen stručne spreme, po zanimanju <b> {prikaziPolje(poljaUgovorORadu.zanimanje, "ZANIMANJE", true)} </b> (u daljem tekstu: Zaposleni), sa druge strane dana {datumPotpisa} godine zaključuju:
@@ -687,7 +686,7 @@ export default function KorisniciDokumenti() {
               <li>Stanje lagera i magacina</li>
               <li>Učestvovanje u popisima</li>
               <li>Definisanje lay-outa za različite kategorije MPO, kao i sve izmene u vezi sa istim.</li>
-              <li>Obilaske MPO, kako bi se uverio o pozicioniranosti poverenih kategorija za koje je zadužen, razmenu informacija sa zaposlenima u maloprodaji radi dobijanja realne i aktuelne slike "sa terena"</li>
+              <li>Obilaske MPO, kako bi se uverio o pozicioniranosti poverenih kategorija za koje je zadužen, razmenu informacija sa zaposlenima u maloprodaji radi dobijanja realne i aktuelne slike &quot;sa terena&quot;</li>
               <li>Osmišljavanje, izradu i distribuciju izveštaja u vezi sa svojim radom, radom svoje organizacione jedinice, kao i svim aspektima poslova koje obavlja, a u skladu sa dinamikom i temama dogovorenim sa nadređenim</li>
               <li>Praćenje inovacija, trendova, tržišnih dešavanja u svom domenu posla, te analizu istih i razmatranje implementacije istih u poslovanje kompanije</li>
               <li>Stalnu otvorenost za sticanje novih i nadogradnju postojećih znanja i veština, kao i spremnost i angažovanje da sopstvena znanja prenese kolegama i novozaposlenima</li>

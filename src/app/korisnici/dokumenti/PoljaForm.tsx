@@ -104,7 +104,7 @@ const korisnici = ["Milan Jovanović", "Ana Petrović", "Marko Marković"];
 const direktori = ["Petar Petrović", "Jelena Ilić"];
 const registracije = ["BG123AA", "NS456BB", "NI789CC"];
 
-export default function PoljaForm({ open, onClose, values, onChange, onAddStavka, docType = 'plan' }: PoljaFormProps) {
+export default function PoljaForm({ open, onClose, values, onChange, docType = 'plan' }: PoljaFormProps) {
   const [form, setForm] = useState<PoljaFormValues>(values);
   const [lokacijaInput, setLokacijaInput] = useState("");
   const [showCustomLokacija, setShowCustomLokacija] = useState(false);
@@ -124,7 +124,6 @@ export default function PoljaForm({ open, onClose, values, onChange, onAddStavka
       setShowStavkaRow(false);
       setNovaStavka({ zaposleni: "", nekorisceni: "", korisceni: "" });
     }
-    // eslint-disable-next-line
   }, [open, values, docType]);
 
   const handleClose = () => {
