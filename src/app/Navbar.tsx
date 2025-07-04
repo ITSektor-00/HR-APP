@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react'
-import DynamicIcon from './components/DynamicIcon'
+import React, { useState } from 'react'
 import Image from "next/image"
 import Link from "next/link"
 import { useUser } from "./ThemeContext";
@@ -35,13 +34,14 @@ export default function Navbar() {
       {/* Leva strana: logo i naziv (klikabilno) */}
       <div className="flex items-center gap-2 select-none">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200">
-          <img
-            src="/favicon.ico"
-            alt="Favicon"
+          <Image
+            src="/logoBeli.svg"
+            alt="Logo"
             width={36}
             height={36}
             className="w-9 h-9"
             style={{ display: 'inline-block' }}
+            priority
           />
           <span className="hidden sm:inline font-semibold text-xl tracking-wide text-white" style={{fontFamily: 'InterVariable, sans-serif', letterSpacing: '0.04em'}}>HR Platforma</span>
         </Link>
@@ -87,13 +87,14 @@ export default function Navbar() {
             aria-label="Profil"
           >
             {user && user.slika ? (
-              <img
+              <Image
                 src={user.slika}
                 alt="Profil"
                 width={36}
                 height={36}
                 className="w-9 h-9 rounded-full object-cover"
                 style={{ objectFit: 'cover' }}
+                priority
               />
             ) : (
               <svg className="w-7 h-7 text-primary-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

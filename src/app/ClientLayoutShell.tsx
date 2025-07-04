@@ -32,8 +32,6 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
         return
       }
 
-      const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
-
       fetch('/api/profil', { credentials: 'include' })
         .then(res => {
           if (res.ok) {
