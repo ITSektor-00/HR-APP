@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 export default function RegistracijaPage() {
   const [ime, setIme] = useState("");
@@ -44,7 +45,8 @@ export default function RegistracijaPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-100/80 to-primary-300/60 relative">
       <header className="flex flex-col items-center mb-8 select-none">
-        <span className="text-2xl font-extrabold tracking-widest text-primary-700" style={{letterSpacing: '0.18em', fontFamily: 'InterVariable, sans-serif'}}>HR PLATFORMA</span>
+        <Image src="/logo.svg" alt="Logo" width={64} height={64} className="mb-2" />
+        <span className="text-xl font-semibold tracking-widest text-[#3A3CA6]" style={{letterSpacing: '0.18em', fontFamily: 'InterVariable, sans-serif'}}>HR PLATFORMA</span>
       </header>
       <Card className={cn("w-[430px] max-w-full h-[420px] px-8 py-8 mx-auto shadow-2xl glassmorphism border-none bg-white/70 backdrop-blur-lg animate-fade-in-up flex flex-col justify-center items-center")}> 
         <CardHeader className="flex justify-center">

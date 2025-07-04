@@ -2,7 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import type { Metadata } from "next";
 import ClientLayoutShell from "./ClientLayoutShell";
-import { ThemeProvider } from "./ThemeContext";
+import { ThemeProvider, UserProvider } from "./ThemeContext";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "HR Platforma",
   description: "Moderna HR platforma za upravljanje ljudskim resursima",
   icons: {
-    icon: "/hr.svg",
+    icon: "/favicon.ico",
   },
 };
 
@@ -26,7 +26,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="sr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--background)] font-sans`}>
         <ThemeProvider>
-          <ClientLayoutShell>{children}</ClientLayoutShell>
+          <UserProvider>
+            <ClientLayoutShell>{children}</ClientLayoutShell>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

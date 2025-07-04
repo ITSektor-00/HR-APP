@@ -15,7 +15,7 @@ function getUserIdFromRequest(req: NextRequest) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
     return decoded.id;
-  } catch {
+  } catch (e) {
     return null;
   }
 }

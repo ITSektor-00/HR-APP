@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import DynamicIcon from './components/DynamicIcon'
 import Image from "next/image"
 import Link from "next/link"
+import { useUser } from "./ThemeContext";
 
 type User = {
   id: number;
@@ -15,14 +16,9 @@ type User = {
 export default function Navbar() {
   const [profilOpen, setProfilOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const { user, loading } = useUser();
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window.location.pathname === '/prijava' || window.location.pathname === '/registracija')) return;
-    fetch('/api/profil', { credentials: 'include' })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => setUser(data))
-  }, [])
+  if (loading) return null;
 
   async function handleLogout() {
     await fetch('/api/odjava', { method: 'POST', credentials: 'include' })
@@ -39,15 +35,15 @@ export default function Navbar() {
       {/* Leva strana: logo i naziv (klikabilno) */}
       <div className="flex items-center gap-2 select-none">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200">
-          <DynamicIcon
-            iconName="human-resources"
-            alt="HR Platforma"
-            width={28}
-            height={28}
-            className="w-6 h-6 sm:w-7 sm:h-7"
-            priority
+          <img
+            src="/favicon.ico"
+            alt="Favicon"
+            width={36}
+            height={36}
+            className="w-9 h-9"
+            style={{ display: 'inline-block' }}
           />
-          <span className="hidden sm:inline font-extrabold text-base sm:text-lg tracking-wide text-white" style={{fontFamily: 'InterVariable, sans-serif', letterSpacing: '0.04em'}}>HR Platforma</span>
+          <span className="hidden sm:inline font-semibold text-xl tracking-wide text-white" style={{fontFamily: 'InterVariable, sans-serif', letterSpacing: '0.04em'}}>HR Platforma</span>
         </Link>
       </div>
       {/* Sredina: search input, samo na lg+ */}
@@ -86,18 +82,18 @@ export default function Navbar() {
         {/* Profil dugme uvek vidljivo */}
         <div className="relative">
           <button
-            className="inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-[var(--navbar-hover)] focus:outline-none transition-colors duration-200 bg-primary-200 text-primary-900 font-bold text-lg"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-[var(--navbar-hover)] focus:outline-none transition-colors duration-200 bg-primary-200 text-primary-900 font-bold text-lg overflow-hidden"
             onClick={() => user && setProfilOpen(v => !v)}
             aria-label="Profil"
           >
             {user && user.slika ? (
-              <Image
+              <img
                 src={user.slika}
                 alt="Profil"
-                width={56}
-                height={56}
-                className="w-14 h-14 rounded-full object-cover"
-                priority
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-full object-cover"
+                style={{ objectFit: 'cover' }}
               />
             ) : (
               <svg className="w-7 h-7 text-primary-900" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -153,14 +149,14 @@ export default function Navbar() {
       </div>
       {/* Modal za izmenu profila */}
       {modalOpen && (
-        <ProfileModal user={user} onClose={() => setModalOpen(false)} onSave={u => { setUser(u); setModalOpen(false); }} />
+        <ProfileModal user={user} onClose={() => setModalOpen(false)} />
       )}
     </header>
   )
 }
 
 // Modal za izmenu profila
-function ProfileModal({ user, onClose, onSave }: { user: User | null, onClose: () => void, onSave: (u: User | null) => void }) {
+function ProfileModal({ user, onClose }: { user: User | null, onClose: () => void }) {
   const [ime, setIme] = useState(user?.ime || "")
   const [prezime, setPrezime] = useState(user?.prezime || "")
   const [email, setEmail] = useState(user?.email || "")
@@ -203,7 +199,7 @@ function ProfileModal({ user, onClose, onSave }: { user: User | null, onClose: (
       setError(data.error || "Greška pri čuvanju profila.")
       return
     }
-    onSave(data)
+    onClose()
   }
 
   return (

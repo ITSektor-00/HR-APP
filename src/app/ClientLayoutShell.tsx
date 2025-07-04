@@ -8,7 +8,53 @@ import { useThemeContext } from './ThemeContext'
 export default function ClientLayoutShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [hovering, setHovering] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const { theme, mounted } = useThemeContext()
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const path = window.location.pathname
+      const isAuthRoute = path === '/prijava' || path === '/registracija'
+      
+      if (isAuthRoute) {
+        setIsAuthenticated(false)
+        setIsLoading(false)
+        return
+      }
+
+      const urlParams = new URLSearchParams(window.location.search)
+      const prijavaUspesna = urlParams.get('prijava') === 'uspesna'
+      if (prijavaUspesna) {
+        setIsAuthenticated(true)
+        setIsLoading(false)
+        window.history.replaceState({}, '', '/')
+        return
+      }
+
+      const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
+
+      fetch('/api/profil', { credentials: 'include' })
+        .then(res => {
+          if (res.ok) {
+            setIsAuthenticated(true)
+          } else if (res.status === 401) {
+            window.location.replace('/prijava')
+          } else {
+            setIsAuthenticated(true)
+          }
+        })
+        .catch(() => {
+          setIsAuthenticated(true)
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }
+
+    const timeoutId = setTimeout(checkAuth, 100)
+    return () => clearTimeout(timeoutId)
+  }, [])
 
   // Event listener za hamburger dugme na mobilnim uređajima
   useEffect(() => {
@@ -44,9 +90,10 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
     }
   }, [sidebarOpen])
 
-  if (!mounted) return null
+  if (!mounted || isLoading) {
+    return null
+  }
 
-  // Proveri da li je auth ruta
   let isAuthRoute = false
   if (typeof window !== 'undefined') {
     const path = window.location.pathname
@@ -55,6 +102,10 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
 
   if (isAuthRoute) {
     return <div className="min-h-screen w-full flex items-center justify-center bg-[var(--main-bg)]">{children}</div>
+  }
+
+  if (!isAuthenticated) {
+    return null
   }
 
   // Sidebar je otvoren ako je kliknuto ili ako je hoverovan dok je zatvoren
