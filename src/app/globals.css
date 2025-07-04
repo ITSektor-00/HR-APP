@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
 @tailwind base;
 @tailwind components;
 
@@ -47,49 +46,6 @@
   --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
   --sidebar-border: oklch(0.928 0.006 264.531);
   --sidebar-ring: oklch(0.707 0.022 261.325);
-}
-
-.dark {
-  --background: oklch(0.13 0.028 261.692);
-  --foreground: oklch(0.985 0.002 247.839);
-  --navbar-bg: #1a1a2e;
-  --navbar-hover: #16213e;
-  --sidebar-bg: #16213e;
-  --main-bg: #0f0f23;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --border-color: #27272a;
-  --scrollbar-thumb: #3f3f46;
-  --scrollbar-track: #0f0f23;
-  --card: oklch(0.21 0.034 264.665);
-  --card-foreground: oklch(0.985 0.002 247.839);
-  --popover: oklch(0.21 0.034 264.665);
-  --popover-foreground: oklch(0.985 0.002 247.839);
-  --primary: oklch(0.928 0.006 264.531);
-  --primary-foreground: oklch(0.21 0.034 264.665);
-  --secondary: oklch(0.278 0.033 256.848);
-  --secondary-foreground: oklch(0.985 0.002 247.839);
-  --muted: oklch(0.278 0.033 256.848);
-  --muted-foreground: oklch(0.707 0.022 261.325);
-  --accent: oklch(0.278 0.033 256.848);
-  --accent-foreground: oklch(0.985 0.002 247.839);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.034 264.665);
-  --sidebar-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-accent: oklch(0.278 0.033 256.848);
-  --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
 @theme inline {
@@ -169,20 +125,10 @@ html {
   box-shadow: 0 2px 12px 0 rgba(58,60,166,0.08), 0 1.5px 0 0 #e5e7eb;
 }
 
-.dark .glass-active-link {
-  background: rgba(255,255,255,0.1);
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.3), 0 1.5px 0 0 #27272a;
-}
-
 .text-shadow-glow {
   text-shadow: 0 1px 8px #3A3CA6, 0 0.5px 0 #fff;
 }
 
-.dark .text-shadow-glow {
-  text-shadow: 0 1px 8px #6366f1, 0 0.5px 0 #000;
-}
-
-/* Theme toggle button animations */
 .theme-toggle {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -195,7 +141,6 @@ html {
   transform: scale(0.95);
 }
 
-/* Smooth transitions for theme changes */
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
@@ -206,24 +151,10 @@ html {
   border-radius: 9999px 0 0 9999px;
   font-weight: bold;
 }
-.dark .sidebar-active-link {
-  background: #23244d;
-  color: #fff;
-}
 
-/* Dugmad za otvaranje/zatvaranje sidebar-a */
 .group button,
 button[aria-label="Otvori meni"] {
   color: #3A3CA6;
-}
-.dark .group button,
-.dark button[aria-label="Otvori meni"] {
-  color: #fff !important;
-}
-.dark .group button:hover,
-.dark button[aria-label="Otvori meni"]:hover {
-  background: #23244d !important;
-  color: #fff !important;
 }
 
 @layer base {

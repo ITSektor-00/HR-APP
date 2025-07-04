@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import DynamicIcon from './components/DynamicIcon'
-import { useThemeContext } from './ThemeContext'
 
 interface NavLink {
   href: string
@@ -74,7 +73,6 @@ const sections = [
 
 export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   const pathname = usePathname()
-  const { theme } = useThemeContext();
 
   return (
     <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'} overflow-x-hidden`}>
@@ -85,7 +83,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
           label="Komandna tabla"
           active={pathname === '/'}
           sidebarOpen={sidebarOpen}
-          theme={theme}
         />
       </div>
       {sections.map((section, idx) => (
@@ -107,7 +104,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
                 label={link.label}
                 active={pathname === link.href}
                 sidebarOpen={sidebarOpen}
-                theme={theme}
               />
             ))}
           </div>
@@ -117,7 +113,7 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   )
 }
 
-function SidebarItem({ href, icon, label, active, sidebarOpen, theme }: { href: string, icon?: React.ReactElement, label: string, active: boolean, sidebarOpen: boolean, theme: string }) {
+function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string, icon?: React.ReactElement, label: string, active: boolean, sidebarOpen: boolean }) {
   if (!sidebarOpen) {
     return (
       <div className="relative flex items-center justify-center w-full">
@@ -125,7 +121,7 @@ function SidebarItem({ href, icon, label, active, sidebarOpen, theme }: { href: 
           href={href}
           scroll={false}
           className={`flex items-center justify-center w-full h-10 my-0.5 rounded-lg transition-colors duration-100
-            ${active ? (theme === 'dark' ? 'bg-gray-800 text-white font-bold' : 'bg-gray-200 text-black font-bold border border-gray-400') : 'text-[var(--text-primary)]'}
+            ${active ? 'bg-gray-200 text-black font-bold border border-gray-400' : 'text-[var(--text-primary)]'}
             hover:bg-[var(--border-color)] focus:outline-none
           `}
           tabIndex={0}

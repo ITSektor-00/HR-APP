@@ -3,7 +3,6 @@ import { useTheme } from "./useTheme";
 import React from "react";
  
 export default function ClientThemeProvider({ children }: { children: React.ReactNode }) {
-  const { mounted } = useTheme();
-  if (!mounted) return null; // ili loader
+  // Uvek mounted, uvek light mod
   return <>{children}</>;
 } 

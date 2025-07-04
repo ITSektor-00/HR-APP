@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "HR Platforma",
   description: "Moderna HR platforma za upravljanje ljudskim resursima",
   icons: {
-    icon: "/favicon.png",
+    icon: "/hr.svg",
   },
 };
 

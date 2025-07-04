@@ -25,7 +25,7 @@ export default function DynamicIcon({
 
   if (!mounted) return null // Ne prikazuj ništa dok se tema ne učita
 
-  const iconPath = getIconPath(iconName, theme)
+  const iconPath = `/ikonice/${iconName}.svg`;
 
   return (
     <Image 
@@ -35,7 +35,7 @@ export default function DynamicIcon({
       height={height} 
       className={className}
       priority={priority}
-      key={`${iconName}-${theme}`}
+      key={iconName}
     />
   )
 } 

@@ -29,30 +29,12 @@ const whiteIconMap: Record<string, string> = {
 }
 
 export function useIconPath(iconName: string) {
-  const { theme } = useTheme()
-  
-  // Za tamni režim koristi bele ikonice
-  if (theme === 'dark') {
-    const whiteIconName = whiteIconMap[iconName]
-    if (whiteIconName && whiteIconName !== iconName) {
-      return `/ikonice/beleIkonice/${whiteIconName}.svg`
-    }
-  }
-  
-  // Za svetli režim koristi crne ikonice
-  return `/ikonice/${iconName}.svg`
+  // Uvek koristi light varijantu
+  return `/ikonice/${iconName}.svg`;
 }
 
 // Pomoćna funkcija za direktno dobijanje putanje bez hook-a
-export function getIconPath(iconName: string, theme: 'light' | 'dark') {
-  if (theme === 'dark') {
-    const whiteIconName = whiteIconMap[iconName]
-    console.log('getIconPath:', { iconName, theme, whiteIconName })
-    if (whiteIconName && whiteIconName !== iconName) {
-      return `/ikonice/beleIkonice/${whiteIconName}.svg`
-    }
-  }
-  
-  console.log('getIconPath:', { iconName, theme, fallback: `/ikonice/${iconName}.svg` })
-  return `/ikonice/${iconName}.svg`
+export function getIconPath(iconName: string, theme?: 'light') {
+  // Uvek koristi light varijantu
+  return `/ikonice/${iconName}.svg`;
 } 
