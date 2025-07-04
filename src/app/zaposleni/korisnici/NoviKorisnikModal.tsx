@@ -291,7 +291,7 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
         // Dodaj još polja po potrebi
       }));
       if (data.datum_rodjenja) setDatumRodjenja(new Date(data.datum_rodjenja.replace(/\./g, '-')));
-    } catch (err) {
+    } catch {
       alert('Greška pri ekstrakciji podataka iz PDF-a.');
     }
   };

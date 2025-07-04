@@ -1,6 +1,5 @@
 "use client";
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import Image from "next/image";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import './NoviKorisnikModal.css';
@@ -47,12 +46,7 @@ const tabs = [
   { key: "pristup", label: "Pristup", icon: "/ikonice/secure-box.svg" },
 ];
 
-const EyeSVG = () => (
-  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="#888" strokeWidth="2"/><circle cx="12" cy="12" r="3" stroke="#888" strokeWidth="2"/></svg>
-);
-const EyeOffSVG = () => (
-  <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.8 21.8 0 0 1 5.06-6.06M9.53 9.53A3.001 3.001 0 0 0 12 15a3 3 0 0 0 2.47-5.47" stroke="#888" strokeWidth="2"/><path d="m1 1 22 22" stroke="#888" strokeWidth="2"/></svg>
-);
+
 
 const POZICIJE = [
   "Direktor prodaje", "Finansijski direktor", "Izvršni direktor", "Marketing direktor", "Menadžer ljudskih resursa", "Operativni direktor", "Poslovni analitičar", "Tehnološki direktor"
@@ -85,13 +79,13 @@ const sektorOptions = SEKTORI.map(s => ({ value: s.label, label: (
 const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }) => {
   const formRef = useRef<HTMLFormElement>(null);
   const [activeTab, setActiveTab] = useState("licni");
-  const [showPassword, setShowPassword] = useState(false);
+
   const [datumRodjenja, setDatumRodjenja] = useState<Date | null>(null);
   const [datumPocetka, setDatumPocetka] = useState<Date | null>(null);
   const [datumZavrsetka, setDatumZavrsetka] = useState<Date | null>(null);
   const [slika, setSlika] = useState<string | null>(null);
   const [sektor, setSektor] = useState(SEKTORI[0].label);
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   const [valuta, setValuta] = useState(korisnik.valuta || "RSD");
 
   const initialErrors = useMemo((): Record<string, string> => ({
@@ -101,7 +95,7 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
   }), []);
   
   const [form, setForm] = useState<KorisnikData>({} as KorisnikData);
-  const [errors, setErrors] = useState<Record<string, string>>(initialErrors);
+
 
   useEffect(() => {
     if (open) {
@@ -121,24 +115,18 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
       setSlika(korisnik.fotografija || null);
       setSektor(korisnik.sektor || SEKTORI[0].label);
       setValuta(korisnik.valuta || "RSD");
-      setErrors(initialErrors);
+
     }
   }, [open, korisnik, initialErrors]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-    if (touched[name]) {
-      setErrors(prev => ({ ...prev, [name]: value ? '' : 'Ovo polje je obavezno' }));
-    }
+
     if (name === "valuta") setValuta(value);
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setTouched(prev => ({ ...prev, [name]: true }));
-    setErrors(prev => ({ ...prev, [name]: value ? '' : 'Ovo polje je obavezno' }));
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +147,6 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
       }
     });
 
-    setErrors(newErrors);
 
     if (Object.values(newErrors).some(error => error !== '')) {
       return;
@@ -179,16 +166,7 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
     onSave(finalData);
   };
 
-  const handleSlika = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setSlika(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+
 
   if (!open) return null;
 

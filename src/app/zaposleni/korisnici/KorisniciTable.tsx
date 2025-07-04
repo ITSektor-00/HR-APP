@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import NoviKorisnikModal from './NoviKorisnikModal';
 import UrediKorisnikModal from './UrediKorisnikModal';
 
 interface Korisnik {
@@ -33,8 +32,6 @@ interface Korisnik {
 
 interface Props {
   korisnici: Korisnik[];
-  onView: (id: number) => void;
-  onMore: (id: number) => void;
   loading?: boolean;
   visibleColumns: string[];
   selectedIds: number[];
@@ -117,7 +114,7 @@ function KebabMenu({ onEdit, onDelete }: { onEdit: () => void, onDelete: () => v
   );
 }
 
-const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, visibleColumns, selectedIds, onSelect, onSelectAll, allSelected, page = 1, rowsPerPage = korisnici.length }) => {
+const KorisniciTable: React.FC<Props> = ({ korisnici, loading, visibleColumns, selectedIds, onSelect, onSelectAll, allSelected, page = 1, rowsPerPage = korisnici.length }) => {
   const [editKorisnik, setEditKorisnik] = useState<Korisnik | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -131,7 +128,7 @@ const KorisniciTable: React.FC<Props> = ({ korisnici, onView, onMore, loading, v
     setDeleteId(null);
     window.location.reload();
   };
-  const handleEditSave = async (data: any) => {
+  const handleEditSave = async (data: Record<string, unknown>) => {
     if (!editKorisnik) return;
     await fetch(`/api/zaposleni/korisnici?id=${editKorisnik.id}`, {
       method: 'PUT',

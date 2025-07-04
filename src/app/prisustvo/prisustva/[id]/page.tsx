@@ -22,8 +22,14 @@ export default function PrisustvoDetaljiPage() {
 
   useEffect(() => {
     const fetchPrisustvo = async () => {
+      const id = params && typeof params === 'object' && 'id' in params ? (params as Record<string, string>).id : undefined;
+      if (!id) {
+        setError('Nevalidan ID');
+        setLoading(false);
+        return;
+      }
       try {
-        const res = await fetch(`/api/prisustva/${params.id}`);
+        const res = await fetch(`/api/prisustva/${id}`);
         if (!res.ok) {
           throw new Error('Prisustvo nije pronađeno');
         }
@@ -36,10 +42,8 @@ export default function PrisustvoDetaljiPage() {
       }
     };
 
-    if (params.id) {
-      fetchPrisustvo();
-    }
-  }, [params.id]);
+    fetchPrisustvo();
+  }, [params]);
 
   if (loading) {
     return (

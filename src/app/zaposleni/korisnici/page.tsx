@@ -6,7 +6,7 @@ import NoviKorisnikModal from './NoviKorisnikModal';
 import ExportModal from './ExportModal';
 import ColumnsMenu from './ColumnsMenu';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+
 
 interface Korisnik {
   id: number;
@@ -96,12 +96,7 @@ export default function KorisniciPage() {
     setLoading(false);
   };
 
-  const handleView = () => {
-    // logika za prikaz detalja
-  };
-  const handleMore = () => {
-    // logika za više opcija
-  };
+
   const handleAdd = async (novi: KorisnikData) => {
     try {
       const res = await fetch('/api/zaposleni/korisnici', {
@@ -268,8 +263,6 @@ export default function KorisniciPage() {
         <div className="overflow-x-auto w-full">
           <KorisniciTable
             korisnici={paginatedKorisnici}
-            onView={handleView}
-            onMore={handleMore}
             loading={loading}
             visibleColumns={visibleColumns}
             selectedIds={selectedIds}

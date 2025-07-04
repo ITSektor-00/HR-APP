@@ -22,7 +22,33 @@ function formatDatum(datum: string) {
   }
 }
 
-const EditModal = ({ open, onClose, korisnik }: { open: boolean, onClose: () => void, korisnik: any }) => {
+interface KorisnikDetalji {
+  ime?: string;
+  prezime?: string;
+  email?: string;
+  adresa?: string;
+  mesto?: string;
+  grad?: string;
+  jmbg?: string;
+  telefon?: string;
+  pol?: string;
+  pristup?: string;
+  uloga?: string;
+  pozicija?: string;
+  sektor?: string;
+  vrsta_zaposlenja?: string;
+  datum_pocetka?: string;
+  datum_zavrsetka?: string;
+  status_zaposlenja?: string;
+  broj_radne_dozvole?: string;
+  plata?: string;
+  period_plate?: string;
+  datum_kreiranja?: string;
+  datum_azuriranja?: string;
+  fotografija?: string;
+}
+
+const EditModal = ({ open, onClose, korisnik }: { open: boolean, onClose: () => void, korisnik: KorisnikDetalji }) => {
   const [tab, setTab] = useState('detalji');
   return open ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -75,7 +101,7 @@ const EditModal = ({ open, onClose, korisnik }: { open: boolean, onClose: () => 
               </div>
               <div className="flex flex-col gap-1 col-span-2">
                 <label className="text-sm font-medium">Datum početka i datum završetka rada</label>
-                <input className="border rounded p-2" value={formatDatum(korisnik.datum_pocetka) + (korisnik.datum_zavrsetka ? ' → ' + formatDatum(korisnik.datum_zavrsetka) : '')} readOnly />
+                <input className="border rounded p-2" value={formatDatum(korisnik.datum_pocetka || '') + (korisnik.datum_zavrsetka ? ' → ' + formatDatum(korisnik.datum_zavrsetka || '') : '')} readOnly />
               </div>
               <div className="flex flex-col gap-1 col-span-2">
                 <label className="text-sm font-medium">Plata</label>
@@ -109,7 +135,7 @@ const EditModal = ({ open, onClose, korisnik }: { open: boolean, onClose: () => 
   ) : null;
 };
 
-export default function KorisnikDetaljiClient({ korisnik }: { korisnik: any }) {
+export default function KorisnikDetaljiClient({ korisnik }: { korisnik: KorisnikDetalji }) {
   const inicijali = (korisnik.ime?.[0] || '').toUpperCase() + (korisnik.prezime?.[0] || '').toUpperCase();
   const [activeTab, setActiveTab] = useState('detalji');
   const [showDelete, setShowDelete] = useState(false);
@@ -195,8 +221,8 @@ export default function KorisnikDetaljiClient({ korisnik }: { korisnik: any }) {
               <div className="text-gray-500">Pozicija</div><div>{korisnik.pozicija || '--'}</div>
               <div className="text-gray-500">Sektor</div><div>{korisnik.sektor || '--'}</div>
               <div className="text-gray-500">Vrsta zaposlenja</div><div>{korisnik.vrsta_zaposlenja || '--'}</div>
-              <div className="text-gray-500">Datum početka zaposlenja</div><div>{formatDatum(korisnik.datum_pocetka)}</div>
-              <div className="text-gray-500">Datum završetka zaposlenja</div><div>{formatDatum(korisnik.datum_zavrsetka)}</div>
+              <div className="text-gray-500">Datum početka zaposlenja</div><div>{formatDatum(korisnik.datum_pocetka || '')}</div>
+              <div className="text-gray-500">Datum završetka zaposlenja</div><div>{formatDatum(korisnik.datum_zavrsetka || '')}</div>
               <div className="text-gray-500">Status</div><div>{korisnik.status_zaposlenja || '--'}</div>
               <div className="text-gray-500">Broj radne dozvole</div><div>{korisnik.broj_radne_dozvole || '--'}</div>
             </div>
@@ -227,8 +253,8 @@ export default function KorisnikDetaljiClient({ korisnik }: { korisnik: any }) {
         <div className="bg-white rounded-lg shadow p-2 md:p-4 text-sm md:text-base">
           <h2 className="font-semibold mb-1 md:mb-2 text-base md:text-lg">Sistemske informacije</h2>
           <div className="grid grid-cols-2 gap-x-2 md:gap-x-4 gap-y-1 md:gap-y-2 text-sm md:text-base">
-            <div className="text-gray-500">Datum kreiranja</div><div>{formatDatum(korisnik.datum_kreiranja)}</div>
-            <div className="text-gray-500">Datum ažuriranja</div><div>{formatDatum(korisnik.datum_azuriranja)}</div>
+            <div className="text-gray-500">Datum kreiranja</div><div>{formatDatum(korisnik.datum_kreiranja || '')}</div>
+            <div className="text-gray-500">Datum ažuriranja</div><div>{formatDatum(korisnik.datum_azuriranja || '')}</div>
           </div>
         </div>
       </div>
