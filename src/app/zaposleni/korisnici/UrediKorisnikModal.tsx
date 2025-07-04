@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import './NoviKorisnikModal.css';
@@ -187,7 +188,7 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
               style={{ borderBottom: activeTab === tabs[0].key ? '2px solid #2563eb' : '2px solid transparent' }}
               onClick={() => setActiveTab(tabs[0].key)}
             >
-              <img src={tabs[0].icon} alt="" className="w-5 h-5" />
+              <Image src={tabs[0].icon} alt="" width={20} height={20} className="w-5 h-5" />
               <span className="text-lg">{tabs[0].label}</span>
             </button>
             <button
@@ -195,7 +196,7 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
               style={{ borderBottom: activeTab === tabs[1].key ? '2px solid #2563eb' : '2px solid transparent' }}
               onClick={() => setActiveTab(tabs[1].key)}
             >
-              <img src={tabs[1].icon} alt="" className="w-5 h-5" />
+              <Image src={tabs[1].icon} alt="" width={20} height={20} className="w-5 h-5" />
               <span className="text-lg">{tabs[1].label}</span>
             </button>
             <button
@@ -203,7 +204,7 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
               style={{ borderBottom: activeTab === tabs[2].key ? '2px solid #2563eb' : '2px solid transparent' }}
               onClick={() => setActiveTab(tabs[2].key)}
             >
-              <img src={tabs[2].icon} alt="" className="w-5 h-5" />
+              <Image src={tabs[2].icon} alt="" width={20} height={20} className="w-5 h-5" />
               <span className="text-lg">{tabs[2].label}</span>
             </button>
           </div>
@@ -324,7 +325,7 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Plata</label>
                     <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2 gap-2">
-                      <img src="/korisnici/money.svg" alt="valuta" className="w-6 h-6 opacity-60" />
+                      <Image src="/korisnici/money.svg" alt="valuta" width={24} height={24} className="w-6 h-6 opacity-60" />
                       <select
                         name="valuta"
                         value={valuta}
