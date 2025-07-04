@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import { useThemeContext } from '../ThemeContext'
-import { getIconPath } from '../utils/iconUtils'
 
 interface DynamicIconProps {
   iconName: string
@@ -21,7 +20,7 @@ export default function DynamicIcon({
   className = "w-4 h-4",
   priority = false 
 }: DynamicIconProps) {
-  const { theme, mounted } = useThemeContext()
+  const { mounted } = useThemeContext()
 
   if (!mounted) return null // Ne prikazuj ništa dok se tema ne učita
 

@@ -10,12 +10,10 @@ export default function PrijavaPage() {
   const [lozinka, setLozinka] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [theme, setTheme] = useState<string>("light");
 
   useEffect(() => {
     // Uvek koristi light mod
     document.documentElement.classList.remove("dark");
-    setTheme("light");
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

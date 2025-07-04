@@ -14,12 +14,10 @@ export default function RegistracijaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [theme, setTheme] = useState<string>("light");
 
   useEffect(() => {
     // Uvek koristi light mod
     document.documentElement.classList.remove("dark");
-    setTheme("light");
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
