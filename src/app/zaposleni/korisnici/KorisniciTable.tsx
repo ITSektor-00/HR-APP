@@ -1,9 +1,21 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  ColumnDef,
+  ColumnOrderState,
+  VisibilityState,
+} from "@tanstack/react-table";
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import UrediKorisnikModal from './UrediKorisnikModal';
+import EditableCell from './EditableCell';
+import EditStavkaModal from './EditStavkaModal';
+import DeleteStavkaConfirm from './DeleteStavkaConfirm';
 
 interface Korisnik {
   id: number;
@@ -30,33 +42,20 @@ interface Korisnik {
   pristup?: string;
 }
 
-interface Props {
+interface KorisniciTableProps {
   korisnici: Korisnik[];
-  loading?: boolean;
   visibleColumns: string[];
-  selectedIds: number[];
-  onSelect: (id: number, checked: boolean) => void;
-  onSelectAll: (checked: boolean) => void;
-  allSelected: boolean;
-  page?: number;
-  rowsPerPage?: number;
+  columnOrder: string[];
+  onToggleColumn: (column: string) => void;
+  onOrderChange: (updaterOrValue: string[] | ((old: string[]) => string[])) => void;
+  selectedIds?: number[];
+  onSelect?: (id: number, checked: boolean) => void;
+  onSelectAll?: (checked: boolean) => void;
+  allSelected?: boolean;
+  loading?: boolean;
+  onEdit?: (korisnik: Korisnik) => void;
+  onDelete?: (id: number) => void;
 }
-
-const COLUMN_CONFIG = [
-  { key: 'rb', label: 'RB' },
-  { key: 'korisnik', label: 'Korisnik' },
-  { key: 'uloga', label: 'Uloga' },
-  { key: 'pristup', label: 'Pristup' },
-  { key: 'broj_radne_dozvole', label: 'Broj radne dozvole' },
-  { key: 'pozicija', label: 'Pozicija' },
-  { key: 'status_zaposlenja', label: 'Status zaposlenja' },
-  { key: 'vrsta_zaposlenja', label: 'Vrsta zaposlenja' },
-  { key: 'sektor', label: 'Sektor' },
-  { key: 'datum_pocetka', label: 'Datum početka zaposlenja' },
-  { key: 'datum_zavrsetka', label: 'Datum završetka zaposlenja' },
-  { key: 'datum_kreiranja', label: 'Datum kreiranja' },
-  { key: 'datum_azuriranja', label: 'Datum ažuriranja' },
-];
 
 const SEKTORI = [
   { label: "Finansije", color: "#d1fae5" },
@@ -80,239 +79,539 @@ function formatDatum(datum?: string) {
   }
 }
 
-function KebabMenu({ onEdit, onDelete }: { onEdit: () => void, onDelete: () => void }) {
-  const [open, setOpen] = useState(false);
+const columnLabels: Record<string, string> = {
+  korisnik: 'Korisnik',
+  uloga: 'Uloga',
+  pristup: 'Pristup',
+  broj_radne_dozvole: 'Broj radne dozvole',
+  pozicija: 'Pozicija',
+  status_zaposlenja: 'Status zaposlenja',
+  vrsta_zaposlenja: 'Vrsta zaposlenja',
+  sektor: 'Sektor',
+  datum_pocetka: 'Datum početka zaposlenja',
+  datum_zavrsetka: 'Datum završetka zaposlenja',
+  datum_kreiranja: 'Datum kreiranja',
+  datum_azuriranja: 'Datum ažuriranja',
+};
+
+const DEFAULT_COLUMNS = [
+  "korisnik", "uloga", "pristup", "broj_radne_dozvole", "pozicija",
+  "status_zaposlenja", "vrsta_zaposlenja", "sektor",
+  "datum_pocetka", "datum_zavrsetka", "datum_kreiranja", "datum_azuriranja"
+];
+
+export default function KorisniciTable({
+  korisnici,
+  visibleColumns,
+  columnOrder,
+  onToggleColumn,
+  onOrderChange,
+  selectedIds = [],
+  onSelect = () => {},
+  onSelectAll = () => {},
+  allSelected = false,
+  loading,
+  onEdit = () => {},
+  onDelete = () => {},
+}: KorisniciTableProps) {
+  const [sorting, setSorting] = useState<any[]>([]);
+  const [menuOpenRow, setMenuOpenRow] = useState<number | null>(null);
+  const [hoveredCol, setHoveredCol] = useState<string | null>(null);
+  const [openHeaderMenu, setOpenHeaderMenu] = useState<string | null>(null);
+  const [headerMenuHover, setHeaderMenuHover] = useState<string | null>(null);
+  const headerMenuTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [editCell, setEditCell] = useState<{rowIdx: number, colId: string} | null>(null);
+  const [deleteCell, setDeleteCell] = useState<{rowIdx: number, colId: string} | null>(null);
+  const cellPopupRef = useRef<HTMLDivElement | null>(null);
+  const [editModal, setEditModal] = useState<{row: any, column: any, value: string, korisnik?: Korisnik} | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{row: any, column: any, value: string} | null>(null);
+
+  visibleColumns = (visibleColumns && visibleColumns.length > 0) ? visibleColumns : DEFAULT_COLUMNS;
+  columnOrder = (columnOrder && columnOrder.length > 0) ? columnOrder : DEFAULT_COLUMNS;
+
+  const columns = useMemo(() => [
+    ...(columnOrder ?? []).map((key) => ({
+      accessorKey: key,
+      enableSorting: true,
+      enableResizing: true,
+      size: 160,
+      minSize: 80,
+      maxSize: 400,
+      cell: (info: any) => {
+        const k = info.row.original;
+        switch (key) {
+          case 'korisnik':
+            return (
+              <span className="flex items-center gap-2">
+                {k.fotografija ? (
+                  <Image
+                    src={k.fotografija}
+                    alt="avatar"
+                    className="w-6 h-6 rounded-full object-cover"
+                    width={24}
+                    height={24}
+                  />
+                ) : (
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-indigo-400">
+                    {(k.ime?.[0] || '').toUpperCase() + (k.prezime?.[0] || '').toUpperCase()}
+                  </span>
+                )}
+                <span className="whitespace-nowrap">{`${k.ime || ''} ${k.prezime || ''}`.trim()}</span>
+              </span>
+            );
+          case 'uloga':
+            return k.uloga;
+          case 'pristup':
+            return k.pristup;
+          case 'broj_radne_dozvole':
+            return k.broj_radne_dozvole;
+          case 'pozicija':
+            return k.pozicija;
+          case 'status_zaposlenja':
+            return k.status_zaposlenja;
+          case 'vrsta_zaposlenja':
+            return k.vrsta_zaposlenja;
+          case 'sektor':
+            const sektorObj = SEKTORI.find(s => s.label === k.sektor);
+            return <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{backgroundColor: sektorObj?.color || '#d1d5db'}}></span>{k.sektor}</span>;
+          case 'datum_pocetka':
+            return formatDatum(k.datum_pocetka);
+          case 'datum_zavrsetka':
+            return formatDatum(k.datum_zavrsetka);
+          case 'datum_kreiranja':
+            return formatDatum(k.datum_kreiranja);
+          case 'datum_azuriranja':
+            return formatDatum(k.datum_azuriranja);
+          default:
+            return k[key as keyof Korisnik] as string;
+        }
+      },
+      header: key === 'datum_pocetka' ? 'Datum početka zaposlenja' : key === 'datum_zavrsetka' ? 'Datum završetka zaposlenja' : (columnLabels[key] || key),
+    })),
+  ], [columnOrder]);
+
+  const table = useReactTable({
+    data: korisnici,
+    columns,
+    state: {
+      sorting,
+      columnOrder,
+      columnVisibility: Object.fromEntries((columnOrder ?? []).map(k => [k, visibleColumns.includes(k)])),
+    },
+    onSortingChange: setSorting,
+    onColumnOrderChange: (updaterOrValue) => {
+      if (typeof updaterOrValue === 'function') {
+        onOrderChange((updaterOrValue as (old: string[]) => string[])(columnOrder));
+      } else {
+        onOrderChange(updaterOrValue);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
+  });
+
   return (
     <div className="relative">
-      <button
-        className="text-gray-600 hover:bg-gray-100 rounded p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
-        onClick={() => setOpen((v) => !v)}
-        title="Više opcija"
-        type="button"
-      >
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" fill="#888"/><circle cx="12" cy="12" r="2" fill="#888"/><circle cx="12" cy="19" r="2" fill="#888"/></svg>
-      </button>
-      {open && (
-        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-50 flex flex-col py-1">
-          <button
-            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-            onClick={() => { setOpen(false); onEdit(); }}
-          >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M4 21h4.586a1 1 0 0 0 .707-.293l10.414-10.414a2 2 0 0 0 0-2.828l-2.172-2.172a2 2 0 0 0-2.828 0L4.293 15.707A1 1 0 0 0 4 16.414V21z" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Uredi
-          </button>
-          <button
-            className="flex items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors"
-            onClick={() => { setOpen(false); onDelete(); }}
-          >
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 7h12M9 7V5a3 3 0 0 1 6 0v2m2 0v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7h12z" stroke="#b91c1c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Izbriši
-          </button>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-gray-600 font-medium">Učitavanje korisnika...</p>
+          </div>
         </div>
-      )}
-    </div>
-  );
-}
-
-const KorisniciTable: React.FC<Props> = ({ korisnici, loading, visibleColumns, selectedIds, onSelect, onSelectAll, allSelected, page = 1, rowsPerPage = korisnici.length }) => {
-  const [editKorisnik, setEditKorisnik] = useState<Korisnik | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-
-  const handleEdit = (korisnik: Korisnik) => {
-    setEditKorisnik(korisnik);
-    setShowEditModal(true);
-  };
-  const handleDelete = async (id: number) => {
-    await fetch(`/api/zaposleni/korisnici?id=${id}`, { method: 'DELETE' });
-    setDeleteId(null);
-    window.location.reload();
-  };
-  const handleEditSave = async (data: Record<string, unknown>) => {
-    if (!editKorisnik) return;
-    await fetch(`/api/zaposleni/korisnici?id=${editKorisnik.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    setShowEditModal(false);
-    setEditKorisnik(null);
-    window.location.reload();
-  };
-
-  return (
-  <div className="relative">
-    {loading ? (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex flex-col items-center gap-3">
-          <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p className="text-gray-600 font-medium">Učitavanje korisnika...</p>
-        </div>
-      </div>
-    ) : (
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border">
-          <thead className="sticky top-0 bg-white z-10">
-            <tr className="border-b">
-              <th className="p-2">
-                <input 
-                  type="checkbox" 
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 hover:border-blue-400"
-                    checked={allSelected}
-                    onChange={e => onSelectAll(e.target.checked)}
-                />
-              </th>
-              {COLUMN_CONFIG.filter(col => visibleColumns.includes(col.key)).map(col => (
-                <th key={col.key} className="p-2 text-left font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                  {col.label}
-                </th>
-              ))}
-              <th className="p-2 hover:bg-gray-50 transition-colors"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {korisnici.length === 0 ? (
-              <tr>
-                <td colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">
-                  <div className="flex flex-col items-center gap-2">
-                    <svg className="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p className="font-medium">Nema korisnika</p>
-                    <p className="text-sm">Dodajte prvog korisnika da počnete</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              korisnici.map((k, idx) => (
-                <tr key={k.id} className="border-b hover:bg-gray-50 transition-colors">
-                  <td className="p-2">
-                    <input 
-                      type="checkbox" 
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 hover:border-blue-400"
-                        checked={selectedIds.includes(k.id)}
-                        onChange={e => onSelect(k.id, e.target.checked)}
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="table-fixed w-full text-sm">
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id} className="bg-[#f5f6fa]">
+                  {/* Checkbox za selektovanje svih */}
+                  <th className="p-2 text-left font-medium text-gray-700 border-b border-gray-300 bg-[#f5f6fa] select-none w-8" style={{ minWidth: 40 }}>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={e => onSelectAll(e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                  </td>
-                  {COLUMN_CONFIG.filter(col => visibleColumns.includes(col.key)).map(col => {
-                    if (col.key === 'rb') {
-                      return <td key={col.key} className="p-2">{(page - 1) * rowsPerPage + idx + 1}</td>;
-                    }
-                    switch (col.key) {
-                                              case 'korisnik':
-                          return (
-                            <td key={col.key} className="p-2 flex items-center gap-2">
-                            {k.fotografija ? (
-                              <Image
-                                src={
-                                  k.fotografija.startsWith('http')
-                                    ? k.fotografija
-                                    : k.fotografija.startsWith('/')
-                                      ? k.fotografija
-                                      : '/' + k.fotografija
-                                }
-                                alt="avatar"
-                                className="w-8 h-8 rounded-full object-cover"
-                                width={32}
-                                height={32}
-                              />
-                            ) : (
-                                <span className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold text-white" style={{background:'#a5b4fc'}}>
-                                  {(k.ime?.[0] || '').toUpperCase() + (k.prezime?.[0] || '').toUpperCase()}
-                              </span>
-                            )}
-                            {k.ime} {k.prezime}
-                          </td>
-                        );
-                        case 'uloga': return <td key={col.key} className="p-2">{k.uloga}</td>;
-                        case 'pristup': return <td key={col.key} className="p-2">{k.pristup}</td>;
-                        case 'broj_radne_dozvole': return <td key={col.key} className="p-2">{k.broj_radne_dozvole}</td>;
-                        case 'pozicija': return <td key={col.key} className="p-2">{k.pozicija}</td>;
-                      case 'status_zaposlenja': return <td key={col.key} className="p-2">{k.status_zaposlenja}</td>;
-                      case 'vrsta_zaposlenja': return <td key={col.key} className="p-2">{k.vrsta_zaposlenja}</td>;
-                        case 'sektor':
-                          const sektorObj = SEKTORI.find(s => s.label === k.sektor);
-                          return <td key={col.key} className="p-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{backgroundColor: sektorObj?.color || '#d1d5db'}}></span>{k.sektor}</td>;
-                        case 'datum_pocetka': return <td key={col.key} className="p-2">{formatDatum(k.datum_pocetka)}</td>;
-                        case 'datum_zavrsetka': return <td key={col.key} className="p-2">{formatDatum(k.datum_zavrsetka)}</td>;
-                        case 'datum_kreiranja': return <td key={col.key} className="p-2">{formatDatum(k.datum_kreiranja)}</td>;
-                        case 'datum_azuriranja': return <td key={col.key} className="p-2">{formatDatum(k.datum_azuriranja)}</td>;
-                      default: return null;
-                    }
-                  })}
-                  <td className="p-2 flex gap-2">
-                      <Link
-                        href={`/zaposleni/korisnici/${k.id}`}
-                      className="text-indigo-600 hover:bg-indigo-50 rounded p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                      title="Pogledaj detalje"
+                  </th>
+                  {headerGroup.headers.map((header, idx) => (
+                    <th
+                      key={header.id}
+                      className="p-2 text-left font-bold text-gray-700 relative group border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none"
+                      style={{ width: header.getSize(), minWidth: 80 }}
                     >
-                        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="#888" strokeWidth="2"/><circle cx="12" cy="12" r="3" stroke="#888" strokeWidth="2"/></svg>
-                      </Link>
-                      <KebabMenu onEdit={() => handleEdit(k)} onDelete={() => setDeleteId(k.id)} />
+                      <div className="flex items-center gap-2 relative w-full pr-10 group" onMouseEnter={() => setHoveredCol(header.id)} onMouseLeave={() => setHoveredCol(null)}>
+                        <div className="relative flex items-center">
+                          <span className="font-bold">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </span>
+                        </div>
+                        {/* Kebab meni u headeru kolone, sada i za prvu kolonu ali poseban stil */}
+                        {(hoveredCol === header.id || openHeaderMenu === header.id || headerMenuHover === header.id) && (
+                          <div
+                            className={idx === 0 ? "absolute left-3 top-1/2 -translate-y-1/2 z-40" : "absolute right-3 top-1/2 -translate-y-1/2 z-40"}
+                            onMouseEnter={() => {
+                              if (headerMenuTimeout.current) clearTimeout(headerMenuTimeout.current);
+                              setHeaderMenuHover(header.id);
+                            }}
+                            onMouseLeave={() => {
+                              if (headerMenuTimeout.current) clearTimeout(headerMenuTimeout.current);
+                              headerMenuTimeout.current = setTimeout(() => {
+                                setHeaderMenuHover(null);
+                                setOpenHeaderMenu(null);
+                              }, 250);
+                            }}
+                          >
+                            <button
+                              className="p-1 rounded hover:bg-gray-200 focus:outline-none"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setOpenHeaderMenu(openHeaderMenu === header.id ? null : header.id);
+                              }}
+                            >
+                              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="2" fill="#888"/>
+                                <circle cx="12" cy="12" r="2" fill="#888"/>
+                                <circle cx="12" cy="19" r="2" fill="#888"/>
+                              </svg>
+                            </button>
+                            {openHeaderMenu === header.id && (
+                              <div className={idx === 0 ? "absolute left-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm" : "absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm"}>
+                                {/* Prva kolona: samo sakrij kolonu, bez ikonica */}
+                                {idx === 0 ? (
+                                  <button
+                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                    onClick={() => {
+                                      setOpenHeaderMenu(null);
+                                      setHeaderMenuHover(null);
+                                      header.column.toggleVisibility?.();
+                                    }}
+                                  >
+                                    Sakrij kolonu
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                      onClick={() => {
+                                        setOpenHeaderMenu(null);
+                                        setHeaderMenuHover(null);
+                                        header.column.toggleVisibility?.();
+                                      }}
+                                    >
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7Z" stroke="#888" strokeWidth="2"/><path d="M9.5 10.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0Z" stroke="#888" strokeWidth="2"/><path d="M4 4l16 16" stroke="#888" strokeWidth="2"/></svg>
+                                      Sakrij kolonu
+                                    </button>
+                                    <button
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                      onClick={() => {
+                                        setOpenHeaderMenu(null);
+                                        setHeaderMenuHover(null);
+                                        header.column.toggleSorting?.(false);
+                                      }}
+                                    >
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 4v16m0 0l-4-4m4 4l4-4" stroke="#888" strokeWidth="2"/></svg>
+                                      Sortiraj uzlazno
+                                    </button>
+                                    <button
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                      onClick={() => {
+                                        setOpenHeaderMenu(null);
+                                        setHeaderMenuHover(null);
+                                        header.column.toggleSorting?.(true);
+                                      }}
+                                    >
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 20V4m0 0l-4 4m4-4l4 4" stroke="#888" strokeWidth="2"/></svg>
+                                      Sortiraj silazno
+                                    </button>
+                                    <button
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                      onClick={() => {
+                                        setOpenHeaderMenu(null);
+                                        setHeaderMenuHover(null);
+                                        const idx2 = columnOrder.indexOf(header.column.id);
+                                        if (idx2 > 0) {
+                                          const newOrder = [...columnOrder];
+                                          [newOrder[idx2-1], newOrder[idx2]] = [newOrder[idx2], newOrder[idx2-1]];
+                                          onOrderChange(newOrder);
+                                        }
+                                      }}
+                                    >
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="#888" strokeWidth="2"/></svg>
+                                      Pomeri ulevo
+                                    </button>
+                                    <button
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                      onClick={() => {
+                                        setOpenHeaderMenu(null);
+                                        setHeaderMenuHover(null);
+                                        const idx2 = columnOrder.indexOf(header.column.id);
+                                        if (idx2 < columnOrder.length - 1) {
+                                          const newOrder = [...columnOrder];
+                                          [newOrder[idx2+1], newOrder[idx2]] = [newOrder[idx2], newOrder[idx2+1]];
+                                          onOrderChange(newOrder);
+                                        }
+                                      }}
+                                    >
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="#888" strokeWidth="2"/></svg>
+                                      Pomeri udesno
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {/* Resize handle ili dekorativna linija - uvek isto pozicionirana i iste visine */}
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2 right-0 h-[24px] w-2 flex items-center justify-center z-30"
+                          style={{ pointerEvents: header.column.getCanResize && header.column.getCanResize() ? 'auto' : 'none' }}
+                        >
+                          <div
+                            className={
+                              `h-full w-px rounded ${
+                                (header.column.getCanResize && header.column.getCanResize())
+                                  ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-gray-300')
+                                  : 'bg-gray-200'
+                              } transition-all`
+                            }
+                            style={{ cursor: header.column.getCanResize && header.column.getCanResize() ? 'col-resize' : 'default' }}
+                            onMouseDown={header.column.getCanResize && header.column.getCanResize() ? header.getResizeHandler() : undefined}
+                            onTouchStart={header.column.getCanResize && header.column.getCanResize() ? header.getResizeHandler() : undefined}
+                          />
+                        </div>
+                      </div>
+                      {/* Zatvori meni klikom van */}
+                      {openHeaderMenu && (
+                        <div className="fixed inset-0 z-30" onClick={() => { setOpenHeaderMenu(null); setHeaderMenuHover(null); }} />
+                      )}
+                    </th>
+                  ))}
+                  {/* Akcije kolona header */}
+                  <th className="p-2 text-center font-bold text-gray-700 border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none" style={{ width: 80, minWidth: 80 }}>
+                    Akcije
+                  </th>
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td colSpan={visibleColumns.length + 2} className="text-center py-8 text-gray-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg className="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <p className="font-medium">Nema korisnika</p>
+                      <p className="text-sm">Dodajte prvog korisnika da počnete</p>
+                    </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-          </div>
+              ) : (
+                table.getRowModel().rows.map((row, idx, arr) => (
+                  <tr key={row.id} className={idx !== arr.length - 1 ? "border-b" : ""}>
+                    {/* Checkbox za selektovanje reda */}
+                    <td className="p-2 w-8">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(row.original.id)}
+                        onChange={e => onSelect(row.original.id, e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </td>
+                    {row.getVisibleCells().map((cell, cellIdx) => {
+                      // Ne prikazuj editable za checkbox i akcije kolonu
+                      const isEditable = cell.column.id !== 'akcije' && cell.column.id !== 'select';
+                      return (
+                        <td
+                          key={cell.id}
+                          className="p-2 text-[13px] bg-white transition-all duration-300 overflow-visible text-ellipsis whitespace-nowrap relative group"
+                          style={{ width: cell.column.getSize(), minWidth: 80 }}
+                        >
+                          {isEditable ? (
+                            <EditableCell
+                              value={flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              column={cell.column}
+                              row={row}
+                              onEdit={(row, column) => {
+                                if (column.id === 'korisnik') {
+                                  // Pripremi kompletan objekat za modal
+                                  const korisnik = {
+                                    id: row.original.id,
+                                    ime: row.original.ime || '',
+                                    prezime: row.original.prezime || '',
+                                    pol: row.original.pol || '',
+                                    datum_rodjenja: row.original.datum_rodjenja || '',
+                                    jmbg: row.original.jmbg || '',
+                                    adresa: row.original.adresa || '',
+                                    mesto: row.original.mesto || '',
+                                    grad: row.original.grad || '',
+                                    fotografija: row.original.fotografija || '',
+                                    email: row.original.email || '',
+                                    telefon: row.original.telefon || '',
+                                    pozicija: row.original.pozicija || '',
+                                    sektor: row.original.sektor || '',
+                                    status_zaposlenja: row.original.status_zaposlenja || '',
+                                    vrsta_zaposlenja: row.original.vrsta_zaposlenja || '',
+                                    broj_radne_dozvole: row.original.broj_radne_dozvole || '',
+                                    datum_pocetka: row.original.datum_pocetka || '',
+                                    datum_zavrsetka: row.original.datum_zavrsetka || '',
+                                    uloga: row.original.uloga || '',
+                                    pristup: row.original.pristup || '',
+                                    sifra: row.original.sifra || '',
+                                    plata: row.original.plata || '',
+                                    period_plate: row.original.period_plate || '',
+                                    valuta: row.original.valuta || '',
+                                  };
+                                  setEditModal({ row, column, value: '', korisnik });
+                                } else {
+                                  setEditModal({ row, column, value: row.original[column.id] || '' });
+                                }
+                              }}
+                              onDelete={(row, column) => {
+                                setDeleteModal({ row, column, value: row.original[column.id] || '' });
+                              }}
+                            />
+                          ) : (
+                            flexRender(cell.column.columnDef.cell, cell.getContext())
+                          )}
+                        </td>
+                      );
+                    })}
+                    {/* Akcije kolona - stara logika */}
+                    <td className="p-2 text-center bg-white" style={{ width: 80, minWidth: 80 }}>
+                      <div className="flex items-center justify-center gap-1">
+                        {/* Oko dugme za detalje */}
+                        <button
+                          className="p-1 rounded hover:bg-gray-100 focus:outline-none transition-colors"
+                          title="Detalji"
+                          onClick={() => window.location.href = `/zaposleni/korisnici/${row.original.id}`}
+                        >
+                          <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="#888" strokeWidth="2"/>
+                            <circle cx="12" cy="12" r="3" stroke="#888" strokeWidth="2"/>
+                          </svg>
+                        </button>
+                        
+                        {/* Kebab meni */}
+                        <div className="relative">
+                          <button
+                            className="p-1 rounded hover:bg-gray-100 focus:outline-none transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMenuOpenRow(menuOpenRow === row.original.id ? null : row.original.id);
+                            }}
+                            title="Više opcija"
+                          >
+                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                              <circle cx="12" cy="5" r="2" fill="#888"/>
+                              <circle cx="12" cy="12" r="2" fill="#888"/>
+                              <circle cx="12" cy="19" r="2" fill="#888"/>
+                            </svg>
+                          </button>
+                          
+                          {/* Dropdown meni */}
+                          {menuOpenRow === row.original.id && (
+                            <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-md shadow-lg min-w-[140px] text-sm py-1">
+                              <button 
+                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left transition-colors"
+                                onClick={() => {
+                                  onEdit(row.original);
+                                  setMenuOpenRow(null);
+                                }}
+                              >
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="#666" strokeWidth="2"/>
+                                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="#666" strokeWidth="2"/>
+                                </svg>
+                                Uredi
+                              </button>
+                              <button 
+                                className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left transition-colors text-red-600"
+                                onClick={() => {
+                                  if (confirm('Da li ste sigurni da želite da obrišete ovog korisnika?')) {
+                                    onDelete(row.original.id);
+                                  }
+                                  setMenuOpenRow(null);
+                                }}
+                              >
+                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                                  <path d="M3 6h18" stroke="#dc2626" strokeWidth="2"/>
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="#dc2626" strokeWidth="2"/>
+                                </svg>
+                                Obriši
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
-      {showEditModal && editKorisnik && (
+      
+      {/* Zatvaranje menija kada se klikne van tabele */}
+      {menuOpenRow && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setMenuOpenRow(null)}
+        />
+      )}
+      {/* Modal za uređivanje stavke */}
+      {editModal && editModal.korisnik && (
         <UrediKorisnikModal
-          open={showEditModal}
-          onClose={() => { setShowEditModal(false); setEditKorisnik(null); }}
-          onSave={handleEditSave}
-          korisnik={{
-            ime: editKorisnik.ime || '',
-            prezime: editKorisnik.prezime || '',
-            pol: '',
-            datum_rodjenja: '',
-            jmbg: '',
-            adresa: '',
-            mesto: '',
-            grad: '',
-            fotografija: editKorisnik.fotografija || '',
-            email: editKorisnik.email || '',
-            telefon: editKorisnik.telefon || '',
-            pozicija: editKorisnik.pozicija || '',
-            sektor: editKorisnik.sektor || '',
-            status_zaposlenja: editKorisnik.status_zaposlenja || '',
-            vrsta_zaposlenja: editKorisnik.vrsta_zaposlenja || '',
-            broj_radne_dozvole: editKorisnik.broj_radne_dozvole || '',
-            datum_pocetka: editKorisnik.datum_pocetka || '',
-            datum_zavrsetka: editKorisnik.datum_zavrsetka || '',
-            uloga: editKorisnik.uloga || '',
-            pristup: editKorisnik.pristup || '',
-            sifra: '',
-            plata: '',
-            period_plate: '',
+          open={!!editModal}
+          onClose={() => setEditModal(null)}
+          korisnik={editModal.korisnik as any}
+          onSave={async (data) => {
+            // Sačuvaj izmenu korisnika u backendu
+            if (editModal && editModal.korisnik) {
+              await fetch(`/api/zaposleni/korisnici?id=${editModal.korisnik.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+              });
+            }
+            setEditModal(null);
+            // Osveži podatke u tabeli (GET)
+            if (typeof window !== 'undefined') {
+              window.location.reload(); // najjednostavnije, može i bolje sa state-om
+            }
           }}
         />
       )}
-      {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Brisanje korisnika</h2>
-              <button onClick={() => setDeleteId(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
-          </div>
-            <div className="mb-6 text-gray-700">Da li ste sigurni da želite da obrišete ovog korisnika?</div>
-            <div className="flex gap-2 justify-end">
-              <button className="flex items-center gap-2 px-4 py-2 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition" onClick={() => handleDelete(deleteId)}>
-                Izbriši
-            </button>
-              <button className="flex items-center gap-2 px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition" onClick={() => setDeleteId(null)}>
-                Otkaži
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
-);
-};
-
-export default KorisniciTable; 
+      {editModal && !editModal.korisnik && (
+        <EditStavkaModal
+          open={!!editModal}
+          onClose={() => setEditModal(null)}
+          stavka={{ naslov: editModal.value, opis: '' }}
+          onSave={(data) => {
+            // TODO: Sačuvaj izmenu u backendu ili state-u
+            setEditModal(null);
+          }}
+        />
+      )}
+      {/* Potvrda za brisanje stavke */}
+      {deleteModal && (
+        <DeleteStavkaConfirm
+          open={!!deleteModal}
+          onClose={() => setDeleteModal(null)}
+          naziv={deleteModal.value}
+          onDelete={() => {
+            // TODO: Izbriši stavku iz backend-a ili state-a
+            setDeleteModal(null);
+          }}
+        />
+      )}
+    </div>
+  );
+} 

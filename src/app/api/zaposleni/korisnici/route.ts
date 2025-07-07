@@ -6,8 +6,58 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-export async function GET() {
-  const result = await pool.query('SELECT * FROM zaposleni_korisnici ORDER BY id DESC');
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const filters = [
+    // 'korisnik' je specijalan slučaj, obrađuje se ispod
+    { key: 'uloga', op: '=', db: 'uloga' },
+    { key: 'pristup', op: '=', db: 'pristup' },
+    { key: 'broj_radne_dozvole', op: 'ILI', db: 'broj_radne_dozvole' },
+    { key: 'pozicija', op: '=', db: 'pozicija' },
+    { key: 'status_zaposlenja', op: '=', db: 'status_zaposlenja' },
+    { key: 'vrsta_zaposlenja', op: '=', db: 'vrsta_zaposlenja' },
+    { key: 'sektor', op: '=', db: 'sektor' },
+    { key: 'datum_pocetka', op: 'DATE', db: 'datum_pocetka' },
+    { key: 'datum_zavrsetka', op: 'DATE', db: 'datum_zavrsetka' },
+    { key: 'datum_kreiranja', op: 'DATE', db: 'datum_kreiranja' },
+    { key: 'datum_azuriranja', op: 'DATE', db: 'datum_azuriranja' },
+  ];
+  let where: string[] = [];
+  let values: any[] = [];
+  let idx = 1;
+  // Specijalan slučaj: pretraga po imenu ili prezimenu
+  const korisnikParam = searchParams.get('korisnik');
+  if (korisnikParam && korisnikParam !== '') {
+    const terms = korisnikParam.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    for (const term of terms) {
+      where.push(`(
+        LOWER(ime) LIKE LOWER($${idx})
+        OR LOWER(prezime) LIKE LOWER($${idx})
+        OR LOWER(CONCAT(ime, ' ', prezime)) LIKE LOWER($${idx})
+        OR LOWER(CONCAT(prezime, ' ', ime)) LIKE LOWER($${idx})
+      )`);
+      values.push(`%${term}%`);
+      idx++;
+    }
+  }
+  for (const f of filters) {
+    const val = searchParams.get(f.key);
+    if (val && val !== '') {
+      if (f.op === 'ILI') {
+        where.push(`LOWER(${f.db}) LIKE LOWER($${idx})`);
+        values.push(`%${val}%`);
+      } else if (f.op === '=') {
+        where.push(`${f.db} = $${idx}`);
+        values.push(val);
+      } else if (f.op === 'DATE') {
+        where.push(`DATE(${f.db}) = $${idx}`);
+        values.push(val);
+      }
+      idx++;
+    }
+  }
+  const whereClause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+  const result = await pool.query(`SELECT * FROM zaposleni_korisnici ${whereClause} ORDER BY id DESC`, values);
   return NextResponse.json(result.rows);
 }
 

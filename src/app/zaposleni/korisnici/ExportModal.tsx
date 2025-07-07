@@ -53,16 +53,20 @@ export default function ExportModal({ open, onClose, onExport, defaultColumns }:
         <div className="mb-4">
           <div className="font-semibold text-sm mb-1">Kolone</div>
           <div className="max-h-40 overflow-y-auto border rounded p-2">
-            {ALL_COLUMNS.map(col => (
-              <label key={col.key} className="flex items-center gap-2 mb-1">
-                <input
-                  type="checkbox"
-                  checked={selectedColumns.includes(col.key)}
-                  onChange={() => handleToggle(col.key)}
-                />
-                {col.label}
-              </label>
-            ))}
+            {defaultColumns && defaultColumns.map(key => {
+              const col = ALL_COLUMNS.find(c => c.key === key);
+              if (!col) return null;
+              return (
+                <label key={col.key} className="flex items-center gap-2 mb-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedColumns.includes(col.key)}
+                    onChange={() => handleToggle(col.key)}
+                  />
+                  {col.label}
+                </label>
+              );
+            })}
           </div>
         </div>
         <div className="flex gap-2 justify-end mt-4">

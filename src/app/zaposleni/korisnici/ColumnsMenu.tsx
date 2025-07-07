@@ -19,18 +19,19 @@ type ColumnsMenuProps = {
   open: boolean;
   onClose: () => void;
   selected: string[];
-  onChange: (cols: string[]) => void;
+  onChange: (cols: string[], visible: string[]) => void;
 };
 
 export default function ColumnsMenu({ open, onClose, selected, onChange }: ColumnsMenuProps) {
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
-  const [columns, setColumns] = useState(ALL_COLUMNS.map(c => c.key));
+  const [columns, setColumns] = useState<string[]>(ALL_COLUMNS.map(c => c.key));
+  const [visible, setVisible] = useState<string[]>(selected);
   const [search, setSearch] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    setColumns(ALL_COLUMNS.map(c => c.key));
+    setVisible(selected);
   }, [selected]);
 
   // Auto-focus input when menu opens
@@ -63,18 +64,23 @@ export default function ColumnsMenu({ open, onClose, selected, onChange }: Colum
   }, [open, onClose]);
 
   const handleToggle = (key: string) => {
-    if (selected.includes(key)) {
-      onChange(selected.filter((c) => c !== key));
+    let newVisible;
+    if (visible.includes(key)) {
+      newVisible = visible.filter((c) => c !== key);
     } else {
-      onChange([...selected, key]);
+      newVisible = [...visible, key];
     }
+    setVisible(newVisible);
+    onChange(columns, newVisible);
   };
-  const handleAll = () => onChange(ALL_COLUMNS.map((c) => c.key));
-  const handleNone = () => onChange([]);
+  const handleAll = () => { setVisible(ALL_COLUMNS.map((c) => c.key)); onChange(columns, ALL_COLUMNS.map((c) => c.key)); };
+  const handleNone = () => { setVisible([]); onChange(columns, []); };
 
   if (!open) return null;
-  // Filtriraj kolone po pretrazi
-  const filtered = ALL_COLUMNS.filter(col => col.label.toLowerCase().includes(search.toLowerCase()));
+  // Filtriraj kolone po pretrazi, ali uvek prikazuj sve kolone u redosledu iz columns
+  const filtered = columns
+    .map(key => ALL_COLUMNS.find(col => col.key === key))
+    .filter(col => col && col.label.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div ref={menuRef} className="absolute top-full left-0 mt-1 z-50 min-w-64 max-w-xs sm:max-w-sm bg-white shadow-lg border border-gray-200 rounded-lg p-3" role="menu" aria-label="Izbor kolona">
@@ -87,47 +93,51 @@ export default function ColumnsMenu({ open, onClose, selected, onChange }: Colum
         aria-label="Pretraga kolona"
       />
       <div className="max-h-48 overflow-y-auto mb-3 space-y-1" role="group" aria-label="Lista kolona">
-        {filtered.map((col, idx) => (
-          <div
-            key={col.key}
-            className="flex items-center gap-2 group px-2 py-1 rounded hover:bg-gray-50"
-            draggable
-            onDragStart={() => setDraggedIdx(idx)}
-            onDragOver={e => { e.preventDefault(); if (draggedIdx !== null && draggedIdx !== idx) {
-              const newOrder = [...columns];
-              const [removed] = newOrder.splice(draggedIdx, 1);
-              newOrder.splice(idx, 0, removed);
-              setDraggedIdx(idx);
-              setColumns(newOrder);
-            }}}
-            onDragEnd={() => { setDraggedIdx(null); onChange(columns); }}
-            style={{ opacity: draggedIdx === idx ? 0.5 : 1 }}
-            tabIndex={0}
-            role="menuitemcheckbox"
-            aria-checked={selected.includes(col.key)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleToggle(col.key);
-              }
-            }}
-          >
-            {/* Switch dugme */}
-            <button
-              type="button"
-              className={`w-6 h-3 rounded-full flex items-center transition-colors duration-200 ${selected.includes(col.key) ? 'bg-blue-600' : 'bg-gray-300'}`}
-              onClick={() => handleToggle(col.key)}
-              aria-pressed={selected.includes(col.key)}
-              aria-label={`${selected.includes(col.key) ? 'Sakrij' : 'Prikaži'} kolonu ${col.label}`}
+        {filtered.map((col, idx) => {
+          if (!col) return null;
+          return (
+            <div
+              key={col.key}
+              className="flex items-center gap-2 group px-2 py-1 rounded hover:bg-gray-50"
+              draggable
+              onDragStart={() => setDraggedIdx(idx)}
+              onDragOver={e => { e.preventDefault(); if (draggedIdx !== null && draggedIdx !== idx) {
+                const newOrder = [...columns];
+                const [removed] = newOrder.splice(draggedIdx, 1);
+                newOrder.splice(idx, 0, removed);
+                setDraggedIdx(idx);
+                setColumns(newOrder);
+                onChange(newOrder, visible);
+              }}}
+              onDragEnd={() => { setDraggedIdx(null); }}
+              style={{ opacity: draggedIdx === idx ? 0.5 : 1 }}
+              tabIndex={0}
+              role="menuitemcheckbox"
+              aria-checked={visible.includes(col.key)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleToggle(col.key);
+                }
+              }}
             >
-              <span
-                className={`inline-block w-2.5 h-2.5 rounded-full bg-white shadow transform transition-transform duration-200 ${selected.includes(col.key) ? 'translate-x-3' : 'translate-x-0.5'}`}
-              />
-            </button>
-            <span className="flex-1 text-sm select-none truncate">{col.label}</span>
-            <span className="text-gray-400 group-hover:text-gray-600 cursor-move text-xs flex-shrink-0" aria-label="Prevucite za promenu redosleda">≡</span>
-          </div>
-        ))}
+              {/* Switch dugme */}
+              <button
+                type="button"
+                className={`w-6 h-3 rounded-full flex items-center transition-colors duration-200 ${visible.includes(col.key) ? 'bg-blue-600' : 'bg-gray-300'}`}
+                onClick={() => handleToggle(col.key)}
+                aria-pressed={visible.includes(col.key)}
+                aria-label={`${visible.includes(col.key) ? 'Sakrij' : 'Prikaži'} kolonu ${col.label}`}
+              >
+                <span
+                  className={`inline-block w-2.5 h-2.5 rounded-full bg-white shadow transform transition-transform duration-200 ${visible.includes(col.key) ? 'translate-x-3' : 'translate-x-0.5'}`}
+                />
+              </button>
+              <span className="flex-1 text-sm select-none truncate">{col.label}</span>
+              <span className="text-gray-400 group-hover:text-gray-600 cursor-move text-xs flex-shrink-0" aria-label="Prevucite za promenu redosleda">≡</span>
+            </div>
+          );
+        })}
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2 border-t border-gray-200 gap-2">
         <div className="w-full flex flex-row justify-between">

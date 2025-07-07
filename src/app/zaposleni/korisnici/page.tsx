@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import KorisniciTable from './KorisniciTable';
 import NoviKorisnikModal from './NoviKorisnikModal';
+import UrediKorisnikModal from './UrediKorisnikModal';
 import ExportModal from './ExportModal';
 import ColumnsMenu from './ColumnsMenu';
 import { Button } from '@/components/ui/button';
+import KorisniciFilter, { KorisniciFilterValues } from './KorisniciFilter';
 
 
 interface Korisnik {
@@ -23,6 +25,19 @@ interface Korisnik {
   broj_radne_dozvole: string;
   datum_kreiranja: string;
   datum_azuriranja: string;
+  pol?: string;
+  datum_rodjenja?: string;
+  jmbg?: string;
+  adresa?: string;
+  mesto?: string;
+  grad?: string;
+  fotografija?: string;
+  email?: string;
+  telefon?: string;
+  sifra?: string;
+  plata?: string;
+  period_plate?: string;
+  valuta?: string;
   [key: string]: string | number | undefined;
 }
 
@@ -56,41 +71,49 @@ interface KorisnikData {
 const initialKorisnici: Korisnik[] = [];
 
 const ALL_COLUMNS = [
-  'id',
-  'pristup',
-  'datum_pocetka',
-  'uloga',
   'korisnik',
-  'datum_zavrsetka',
+  'uloga',
+  'pristup',
+  'broj_radne_dozvole',
+  'pozicija',
   'status_zaposlenja',
   'vrsta_zaposlenja',
-  'pozicija',
   'sektor',
-  'broj_radne_dozvole',
+  'datum_pocetka',
+  'datum_zavrsetka',
   'datum_kreiranja',
   'datum_azuriranja',
 ];
 
 export default function KorisniciPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingKorisnik, setEditingKorisnik] = useState<Korisnik | null>(null);
   const [korisnici, setKorisnici] = useState(initialKorisnici);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{msg: string, type: 'success'|'error'}|null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [columnsOpen, setColumnsOpen] = useState(false);
+  const [columnOrder, setColumnOrder] = useState<string[]>(ALL_COLUMNS);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(ALL_COLUMNS);
   const [citacLoading, setCitacLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(1);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterValues, setFilterValues] = useState<KorisniciFilterValues>({});
 
   useEffect(() => {
-    fetchKorisnici();
-  }, []);
+    fetchKorisnici(filterValues);
+  }, [filterValues]);
 
-  const fetchKorisnici = async () => {
+  const fetchKorisnici = async (filters: KorisniciFilterValues = {}) => {
     setLoading(true);
-    const res = await fetch('/api/zaposleni/korisnici');
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== '') params.append(key, value);
+    });
+    const res = await fetch('/api/zaposleni/korisnici' + (params.size ? `?${params.toString()}` : ''));
     const data = await res.json();
     setKorisnici(data);
     setLoading(false);
@@ -156,7 +179,20 @@ export default function KorisniciPage() {
     setTimeout(() => setCitacLoading(false), 1000);
   };
 
-  const paginatedKorisnici = korisnici.slice((page-1)*rowsPerPage, page*rowsPerPage);
+  // Frontend filter za korisnika (ime ili prezime)
+  let filteredKorisnici = korisnici;
+  if (filterValues.korisnik && filterValues.korisnik.trim() !== '') {
+    const q = filterValues.korisnik.trim().toLowerCase();
+    const terms = q.split(/\s+/).filter(Boolean);
+    filteredKorisnici = korisnici.filter(k => {
+      const ime = (k.ime || '').toString().toLowerCase();
+      const prezime = (k.prezime || '').toString().toLowerCase();
+      const puno = (ime + ' ' + prezime).trim();
+      // Svaka reč mora biti sadržana u imenu, prezimenu ili punom imenu
+      return terms.every(term => ime.includes(term) || prezime.includes(term) || puno.includes(term));
+    });
+  }
+  const paginatedKorisnici = filteredKorisnici.slice((page-1)*rowsPerPage, page*rowsPerPage);
   const totalPages = Math.ceil(korisnici.length / rowsPerPage);
 
   const handleSelect = (id: number, checked: boolean) => {
@@ -169,12 +205,78 @@ export default function KorisniciPage() {
       setSelectedIds(prev => prev.filter(id => !paginatedKorisnici.some(k => k.id === id)));
     }
   };
-  const handleDelete = async () => {
-    for (const id of selectedIds) {
-      await fetch(`/api/zaposleni/korisnici?id=${id}`, { method: 'DELETE' });
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`/api/zaposleni/korisnici?id=${id}`, { 
+        method: 'DELETE' 
+      });
+      if (res.ok) {
+        setToast({msg: 'Korisnik uspešno obrisan!', type: 'success'});
+        fetchKorisnici(filterValues);
+      } else {
+        const err = await res.json();
+        setToast({msg: err.error || 'Greška pri brisanju.', type: 'error'});
+      }
+    } catch {
+      setToast({msg: 'Greška pri brisanju.', type: 'error'});
     }
-    setSelectedIds([]);
-    fetchKorisnici();
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleEdit = (korisnik: Korisnik) => {
+    // Konvertuj Korisnik u KorisnikData format
+    const korisnikData: KorisnikData = {
+      ime: korisnik.ime || '',
+      prezime: korisnik.prezime || '',
+      pol: korisnik.pol || '',
+      datum_rodjenja: korisnik.datum_rodjenja || '',
+      jmbg: korisnik.jmbg || '',
+      adresa: korisnik.adresa || '',
+      mesto: korisnik.mesto || '',
+      grad: korisnik.grad || '',
+      fotografija: korisnik.fotografija || '',
+      email: korisnik.email || '',
+      telefon: korisnik.telefon || '',
+      pozicija: korisnik.pozicija || '',
+      sektor: korisnik.sektor || '',
+      status_zaposlenja: korisnik.status_zaposlenja || '',
+      vrsta_zaposlenja: korisnik.vrsta_zaposlenja || '',
+      broj_radne_dozvole: korisnik.broj_radne_dozvole || '',
+      datum_pocetka: korisnik.datum_pocetka || '',
+      datum_zavrsetka: korisnik.datum_zavrsetka || '',
+      uloga: korisnik.uloga || '',
+      pristup: korisnik.pristup || '',
+      sifra: korisnik.sifra || '',
+      plata: korisnik.plata || '',
+      period_plate: korisnik.period_plate || '',
+      valuta: korisnik.valuta || '',
+    };
+    setEditingKorisnik(korisnik);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdate = async (updatedKorisnik: KorisnikData) => {
+    if (!editingKorisnik) return;
+    
+    try {
+      const res = await fetch(`/api/zaposleni/korisnici?id=${editingKorisnik.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedKorisnik),
+      });
+      if (res.ok) {
+        setToast({msg: 'Korisnik uspešno ažuriran!', type: 'success'});
+        setEditModalOpen(false);
+        setEditingKorisnik(null);
+        fetchKorisnici(filterValues);
+      } else {
+        const err = await res.json();
+        setToast({msg: err.error || 'Greška pri ažuriranju.', type: 'error'});
+      }
+    } catch {
+      setToast({msg: 'Greška pri ažuriranju.', type: 'error'});
+    }
+    setTimeout(() => setToast(null), 3000);
   };
 
   return (
@@ -221,8 +323,16 @@ export default function KorisniciPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
           <h2 className="text-2xl font-semibold">Tabela</h2>
           <div className="flex flex-wrap items-center gap-2 justify-end">
-            {selectedIds.length > 0 && (
-              <Button variant="destructive" onClick={handleDelete} className="flex items-center gap-2 order-1 sm:order-none">
+                          {selectedIds.length > 0 && (
+               <Button variant="destructive" onClick={async () => {
+                 const confirmed = window.confirm('Da li ste sigurni da želite da obrišete izabrane korisnike?');
+                 if (confirmed) {
+                   for (const id of selectedIds) {
+                     await handleDelete(id);
+                   }
+                   setSelectedIds([]);
+                 }
+               }} className="flex items-center gap-2 order-1 sm:order-none">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect x="6" y="7" width="12" height="12" rx="2" stroke="#fff" strokeWidth="2"/><path d="M9 7V5a3 3 0 1 1 6 0v2" stroke="#fff" strokeWidth="2"/></svg>
                 Obriši ({selectedIds.length})
               </Button>
@@ -251,11 +361,26 @@ export default function KorisniciPage() {
                   open={columnsOpen} 
                   onClose={() => setColumnsOpen(false)} 
                   selected={visibleColumns} 
-                  onChange={setVisibleColumns} 
+                  onChange={(cols, visible) => { setColumnOrder(cols); setVisibleColumns(visible); }}
                 />
               )}
             </div>
-            <Button variant="outline" disabled className="opacity-50 cursor-not-allowed hover:bg-gray-50 active:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:outline-none">Filteri</Button>
+            <Button variant="outline" onClick={() => setFilterOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:outline-none">Filteri</Button>
+            {filterOpen && (
+              <KorisniciFilter
+                open={filterOpen}
+                onClose={() => setFilterOpen(false)}
+                onFilter={setFilterValues}
+                // Ove vrednosti možeš popuniti iz baze ili hardkodirati
+                uloge={[...new Set(korisnici.map(k => k.uloga).filter(Boolean))]}
+                pozicije={[...new Set(korisnici.map(k => k.pozicija).filter(Boolean))]}
+                sektori={[...new Set(korisnici.map(k => k.sektor).filter(Boolean))]}
+                statusi={[...new Set(korisnici.map(k => k.status_zaposlenja).filter(Boolean))]}
+                vrsteZaposlenja={[...new Set(korisnici.map(k => k.vrsta_zaposlenja).filter(Boolean))]}
+                pristupi={[...new Set(korisnici.map(k => k.pristup).filter(Boolean))]}
+                initialValues={filterValues}
+              />
+            )}
           </div>
         </div>
 
@@ -265,12 +390,15 @@ export default function KorisniciPage() {
             korisnici={paginatedKorisnici}
             loading={loading}
             visibleColumns={visibleColumns}
+            columnOrder={columnOrder}
             selectedIds={selectedIds}
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
-            allSelected={paginatedKorisnici.length > 0 && paginatedKorisnici.every(k => selectedIds.includes(k.id))}
-            page={page}
-            rowsPerPage={rowsPerPage}
+            allSelected={selectedIds.length === paginatedKorisnici.length && paginatedKorisnici.length > 0}
+            onOrderChange={setColumnOrder}
+            onToggleColumn={(col) => setVisibleColumns(cols => cols.includes(col) ? cols.filter(c => c !== col) : [...cols, col])}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         </div>
 
@@ -299,6 +427,44 @@ export default function KorisniciPage() {
 
       <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} onExport={handleExport} defaultColumns={visibleColumns} />
       <NoviKorisnikModal open={modalOpen} onClose={() => setModalOpen(false)} onAdd={handleAdd} />
+
+      {/* Modal za uređivanje korisnika */}
+      {editModalOpen && editingKorisnik && (
+        <UrediKorisnikModal
+          open={editModalOpen}
+          korisnik={{
+            ime: editingKorisnik.ime || '',
+            prezime: editingKorisnik.prezime || '',
+            pol: editingKorisnik.pol || '',
+            datum_rodjenja: editingKorisnik.datum_rodjenja || '',
+            jmbg: editingKorisnik.jmbg || '',
+            adresa: editingKorisnik.adresa || '',
+            mesto: editingKorisnik.mesto || '',
+            grad: editingKorisnik.grad || '',
+            fotografija: editingKorisnik.fotografija || '',
+            email: editingKorisnik.email || '',
+            telefon: editingKorisnik.telefon || '',
+            pozicija: editingKorisnik.pozicija || '',
+            sektor: editingKorisnik.sektor || '',
+            status_zaposlenja: editingKorisnik.status_zaposlenja || '',
+            vrsta_zaposlenja: editingKorisnik.vrsta_zaposlenja || '',
+            broj_radne_dozvole: editingKorisnik.broj_radne_dozvole || '',
+            datum_pocetka: editingKorisnik.datum_pocetka || '',
+            datum_zavrsetka: editingKorisnik.datum_zavrsetka || '',
+            uloga: editingKorisnik.uloga || '',
+            pristup: editingKorisnik.pristup || '',
+            sifra: editingKorisnik.sifra || '',
+            plata: editingKorisnik.plata || '',
+            period_plate: editingKorisnik.period_plate || '',
+            valuta: editingKorisnik.valuta || '',
+          }}
+          onClose={() => {
+            setEditModalOpen(false);
+            setEditingKorisnik(null);
+          }}
+          onSave={handleUpdate}
+        />
+      )}
     </div>
   );
 } 
