@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import ColumnsMenu from './ColumnsMenu';
+import ExportModal from './ExportModal';
+import NoviVoziloModal from './NoviVoziloModal';
 
 const COLUMN_CONFIG = [
   { key: "naslov", label: "Naslov" },
@@ -32,27 +35,29 @@ export default function VozilaPage() {
   const [vozila, setVozila] = useState<Vozilo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [visibleColumns] = useState(COLUMN_CONFIG.map(c => c.key));
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(COLUMN_CONFIG.map(c => c.key));
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [page, setPage] = useState(1);
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [novoOpen, setNovoOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchVozila = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch('/api/vozila');
-        if (!res.ok) throw new Error('Greška pri učitavanju vozila');
-        const data: Vozilo[] = await res.json();
-        setVozila(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Greška pri učitavanju vozila');
-      }
-      setLoading(false);
-    };
-    fetchVozila();
-  }, []);
+  const refreshVozila = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/vozila');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Greška pri učitavanju vozila');
+      setVozila(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Greška pri učitavanju vozila');
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { refreshVozila(); }, []);
 
   const paginatedVozila = vozila.slice((page-1)*rowsPerPage, page*rowsPerPage);
   const allSelected = paginatedVozila.length > 0 && paginatedVozila.every(v => selectedIds.includes(v.id));
@@ -77,15 +82,16 @@ export default function VozilaPage() {
           </div>
           <h1 className="text-4xl font-bold ml-2">Vozila</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2 justify-end">
-          <Button onClick={() => {}} variant="default" className="font-semibold bg-[#3A3CA6] hover:bg-blue-700 active:bg-blue-800 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <div className="flex flex-wrap items-center gap-2 justify-end relative">
+          <Button onClick={() => setNovoOpen(true)} variant="default" className="font-semibold bg-[#3A3CA6] hover:bg-blue-700 active:bg-blue-800 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-              <path stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5"/>
+              <circle cx="12" cy="12" r="9" stroke="#fff" strokeWidth="2" />
+              <path d="M12 8v8M8 12h8" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
             </svg>
             Novo vozilo
           </Button>
-          <Button variant="outline" onClick={() => {}} className="hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">Izvoz</Button>
-          <Button variant="outline" onClick={() => {}} className="flex items-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          <Button variant="outline" onClick={() => setExportOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">Izvoz</Button>
+          <Button variant="outline" onClick={() => setColumnsOpen(!columnsOpen)} className="flex items-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
             <span className="w-5 h-5 inline-block align-middle">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g id="columns-3-2" transform="translate(-2 -2)">
@@ -97,8 +103,11 @@ export default function VozilaPage() {
             Kolone <span className="ml-1 bg-indigo-600 text-white rounded px-2">{visibleColumns.length}</span>
           </Button>
           <Button variant="outline" disabled className="opacity-50 cursor-not-allowed hover:bg-gray-50 active:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:outline-none">Filteri</Button>
+          <ColumnsMenu open={columnsOpen} onClose={() => setColumnsOpen(false)} selected={visibleColumns} onChange={setVisibleColumns} />
         </div>
       </div>
+      <NoviVoziloModal open={novoOpen} onClose={() => setNovoOpen(false)} onSuccess={refreshVozila} />
+      <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} vozila={vozila} />
       <div className="overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center py-12">
