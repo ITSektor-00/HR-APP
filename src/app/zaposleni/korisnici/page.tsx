@@ -14,19 +14,7 @@ interface Korisnik {
   id: number;
   ime: string;
   prezime: string;
-  pristup: string;
-  datum_pocetka: string;
-  uloga: string;
-  datum_zavrsetka?: string;
-  status_zaposlenja: string;
-  vrsta_zaposlenja: string;
-  pozicija: string;
-  sektor: string;
-  broj_radne_dozvole: string;
-  datum_kreiranja: string;
-  datum_azuriranja: string;
   pol?: string;
-  datum_rodjenja?: string;
   jmbg?: string;
   adresa?: string;
   mesto?: string;
@@ -34,10 +22,22 @@ interface Korisnik {
   fotografija?: string;
   email?: string;
   telefon?: string;
+  pozicija?: string;
+  sektor?: string;
+  status_zaposlenja?: string;
+  vrsta_zaposlenja?: string;
+  broj_radne_dozvole?: string;
+  datum_pocetka?: string;
+  datum_zavrsetka?: string;
+  datum_kreiranja?: string;
+  datum_azuriranja?: string;
+  uloga?: string;
+  pristup?: string;
   sifra?: string;
   plata?: string;
   period_plate?: string;
   valuta?: string;
+  datum_rodjenja?: string;
   [key: string]: string | number | undefined;
 }
 
@@ -224,33 +224,6 @@ export default function KorisniciPage() {
   };
 
   const handleEdit = (korisnik: Korisnik) => {
-    // Konvertuj Korisnik u KorisnikData format
-    const korisnikData: KorisnikData = {
-      ime: korisnik.ime || '',
-      prezime: korisnik.prezime || '',
-      pol: korisnik.pol || '',
-      datum_rodjenja: korisnik.datum_rodjenja || '',
-      jmbg: korisnik.jmbg || '',
-      adresa: korisnik.adresa || '',
-      mesto: korisnik.mesto || '',
-      grad: korisnik.grad || '',
-      fotografija: korisnik.fotografija || '',
-      email: korisnik.email || '',
-      telefon: korisnik.telefon || '',
-      pozicija: korisnik.pozicija || '',
-      sektor: korisnik.sektor || '',
-      status_zaposlenja: korisnik.status_zaposlenja || '',
-      vrsta_zaposlenja: korisnik.vrsta_zaposlenja || '',
-      broj_radne_dozvole: korisnik.broj_radne_dozvole || '',
-      datum_pocetka: korisnik.datum_pocetka || '',
-      datum_zavrsetka: korisnik.datum_zavrsetka || '',
-      uloga: korisnik.uloga || '',
-      pristup: korisnik.pristup || '',
-      sifra: korisnik.sifra || '',
-      plata: korisnik.plata || '',
-      period_plate: korisnik.period_plate || '',
-      valuta: korisnik.valuta || '',
-    };
     setEditingKorisnik(korisnik);
     setEditModalOpen(true);
   };
@@ -277,6 +250,39 @@ export default function KorisniciPage() {
       setToast({msg: 'Greška pri ažuriranju.', type: 'error'});
     }
     setTimeout(() => setToast(null), 3000);
+  };
+
+  // Popravi funkciju za sakrivanje kolone
+  const handleToggleColumn = (col: string) => {
+    setVisibleColumns(cols => cols.includes(col) ? cols.filter(c => c !== col) : [...cols, col]);
+  };
+
+  // Sortiranje po srpskoj abecedi na frontendu
+  const handleSortByName = () => {
+    const sorted = [...korisnici].sort((a, b) => {
+      const imeA = `${a.ime || ''} ${a.prezime || ''}`.trim();
+      const imeB = `${b.ime || ''} ${b.prezime || ''}`.trim();
+      return imeA.localeCompare(imeB, 'sr', { sensitivity: 'base' });
+    });
+    setKorisnici(sorted);
+  };
+
+  const handleSortByNajskorijiPocetak = () => {
+    const sorted = [...korisnici].sort((a, b) => {
+      const dA = a.datum_pocetka ? new Date(a.datum_pocetka).getTime() : 0;
+      const dB = b.datum_pocetka ? new Date(b.datum_pocetka).getTime() : 0;
+      return dB - dA;
+    });
+    setKorisnici(sorted);
+  };
+
+  const handleSortByNajskorijiZavrsetak = () => {
+    const sorted = [...korisnici].sort((a, b) => {
+      const dA = a.datum_zavrsetka ? new Date(a.datum_zavrsetka).getTime() : 0;
+      const dB = b.datum_zavrsetka ? new Date(b.datum_zavrsetka).getTime() : 0;
+      return dB - dA;
+    });
+    setKorisnici(sorted);
   };
 
   return (
@@ -372,12 +378,12 @@ export default function KorisniciPage() {
                 onClose={() => setFilterOpen(false)}
                 onFilter={setFilterValues}
                 // Ove vrednosti možeš popuniti iz baze ili hardkodirati
-                uloge={[...new Set(korisnici.map(k => k.uloga).filter(Boolean))]}
-                pozicije={[...new Set(korisnici.map(k => k.pozicija).filter(Boolean))]}
-                sektori={[...new Set(korisnici.map(k => k.sektor).filter(Boolean))]}
-                statusi={[...new Set(korisnici.map(k => k.status_zaposlenja).filter(Boolean))]}
-                vrsteZaposlenja={[...new Set(korisnici.map(k => k.vrsta_zaposlenja).filter(Boolean))]}
-                pristupi={[...new Set(korisnici.map(k => k.pristup).filter(Boolean))]}
+                uloge={[...new Set(korisnici.map(k => k.uloga).filter(Boolean))] as string[]}
+                pozicije={[...new Set(korisnici.map(k => k.pozicija).filter(Boolean))] as string[]}
+                sektori={[...new Set(korisnici.map(k => k.sektor).filter(Boolean))] as string[]}
+                statusi={[...new Set(korisnici.map(k => k.status_zaposlenja).filter(Boolean))] as string[]}
+                vrsteZaposlenja={[...new Set(korisnici.map(k => k.vrsta_zaposlenja).filter(Boolean))] as string[]}
+                pristupi={[...new Set(korisnici.map(k => k.pristup).filter(Boolean))] as string[]}
                 initialValues={filterValues}
               />
             )}
@@ -388,17 +394,20 @@ export default function KorisniciPage() {
         <div className="overflow-x-auto w-full">
           <KorisniciTable
             korisnici={paginatedKorisnici}
-            loading={loading}
             visibleColumns={visibleColumns}
             columnOrder={columnOrder}
+            onToggleColumn={handleToggleColumn}
+            onOrderChange={setColumnOrder}
             selectedIds={selectedIds}
             onSelect={handleSelect}
             onSelectAll={handleSelectAll}
             allSelected={selectedIds.length === paginatedKorisnici.length && paginatedKorisnici.length > 0}
-            onOrderChange={setColumnOrder}
-            onToggleColumn={(col) => setVisibleColumns(cols => cols.includes(col) ? cols.filter(c => c !== col) : [...cols, col])}
+            loading={loading}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onSortByName={handleSortByName}
+            onSortByNajskorijiPocetak={handleSortByNajskorijiPocetak}
+            onSortByNajskorijiZavrsetak={handleSortByNajskorijiZavrsetak}
           />
         </div>
 

@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
     { key: 'datum_kreiranja', op: 'DATE', db: 'datum_kreiranja' },
     { key: 'datum_azuriranja', op: 'DATE', db: 'datum_azuriranja' },
   ];
-  let where: string[] = [];
-  let values: any[] = [];
+  const where: string[] = [];
+  const values: string[] = [];
   let idx = 1;
   // Specijalan slučaj: pretraga po imenu ili prezimenu
   const korisnikParam = searchParams.get('korisnik');
@@ -65,14 +65,18 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const requiredFields = [
-      'ime', 'prezime', 'pol', 'datum_rodjenja', 'jmbg', 'adresa', 'mesto', 'fotografija',
-      'email', 'telefon', 'pozicija', 'sektor', 'status_zaposlenja', 'vrsta_zaposlenja',
+      'ime', 'prezime', 'pol', 'jmbg', 'adresa', 'mesto',
+      'pozicija', 'sektor', 'status_zaposlenja', 'vrsta_zaposlenja',
       'broj_radne_dozvole', 'datum_pocetka', 'uloga', 'pristup', 'sifra'
     ];
     for (const field of requiredFields) {
       if (!body[field] || body[field] === "") {
         return NextResponse.json({ error: `Polje '${field}' je obavezno.` }, { status: 400 });
       }
+    }
+    // Bar jedan kontakt podatak mora biti popunjen
+    if ((!body.email || body.email === "") && (!body.telefon || body.telefon === "")) {
+      return NextResponse.json({ error: `Polje 'email' ili 'telefon' je obavezno.` }, { status: 400 });
     }
     const {
       ime, prezime, pol, datum_rodjenja, jmbg, adresa, mesto, grad, fotografija,

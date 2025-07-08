@@ -165,7 +165,7 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
 
   const initialErrors = useMemo((): Record<string, string> => ({
     ime: '', prezime: '', pol: '', datum_rodjenja: '', jmbg: '', adresa: '', mesto: '', grad: '', fotografija: '',
-    email: '', telefon: '', pozicija: '', sektor: '', status_zaposlenja: '', vrsta_zaposlenja: '', broj_radne_dozvole: '',
+    email: '', telefon: '', email_ili_telefon: '', pozicija: '', sektor: '', status_zaposlenja: '', vrsta_zaposlenja: '', broj_radne_dozvole: '',
     datum_pocetka: '', datum_zavrsetka: '', uloga: '', pristup: '', sifra: ''
   }), []);
   
@@ -174,7 +174,7 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
   const [backendError, setBackendError] = useState<string | null>(null);
 
   const obaveznaPolja = [
-    'ime', 'prezime', 'pol', 'datum_rodjenja', 'jmbg', 'adresa', 'mesto', 'email',
+    'ime', 'prezime', 'pol', 'jmbg', 'adresa', 'mesto',
     'broj_radne_dozvole', 'pozicija', 'vrsta_zaposlenja', 'sektor', 'status_zaposlenja', 'datum_pocetka', 'plata',
     'sifra', 'pristup', 'uloga',
   ];
@@ -213,6 +213,13 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
       setActiveTab("licni");
       setErrors(initialErrors);
       setBackendError(null);
+      setMissingFields([]);
+      setTouched({});
+      setShowPopup(false);
+      setShowPassword(false);
+      setShowPeriodi(false);
+      setShowLkModal(false);
+      setShowLkModal(false);
     }
   }, [open, editMode, korisnik, initialErrors]);
 
@@ -224,6 +231,18 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
     if (obaveznaPolja.includes(name)) {
       setErrors({ ...errors, [name]: value ? '' : 'Obavezno polje' });
     }
+    
+    // Custom validacija za email/telefon
+    if (name === 'email' || name === 'telefon') {
+      const email = name === 'email' ? value : form.email;
+      const telefon = name === 'telefon' ? value : form.telefon;
+      
+      if ((!email || email.trim() === '') && (!telefon || telefon.trim() === '')) {
+        setErrors({ ...errors, email_ili_telefon: 'Bar jedan od ta dva polja mora biti unet' });
+      } else {
+        setErrors({ ...errors, email_ili_telefon: '' });
+      }
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -231,6 +250,18 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
     setTouched({ ...touched, [name]: true });
     if (obaveznaPolja.includes(name)) {
       setErrors({ ...errors, [name]: form[name] ? '' : 'Obavezno polje' });
+    }
+    
+    // Custom validacija za email/telefon na blur
+    if (name === 'email' || name === 'telefon') {
+      const email = form.email;
+      const telefon = form.telefon;
+      
+      if ((!email || email.trim() === '') && (!telefon || telefon.trim() === '')) {
+        setErrors({ ...errors, email_ili_telefon: 'Bar jedan od ta dva polja mora biti unet' });
+      } else {
+        setErrors({ ...errors, email_ili_telefon: '' });
+      }
     }
   };
 
@@ -244,10 +275,18 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
     data.sektor = sektor;
     data.period_plate = periodPlate;
     setForm(data);
+    
+    // Provera obaveznih polja
     const missing: string[] = [];
     obaveznaPolja.forEach(key => {
       if (!data[key] || data[key] === '') missing.push(key);
     });
+    
+    // Custom validacija za email/telefon - bar jedan mora biti unet
+    if ((!data.email || data.email.trim() === '') && (!data.telefon || data.telefon.trim() === '')) {
+      missing.push('email_ili_telefon');
+    }
+    
     setMissingFields(missing);
     if (missing.length > 0) {
       setShowPopup(true);
@@ -404,7 +443,7 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                         selected={datumRodjenja}
                         onChange={setDatumRodjenja}
                         dateFormat="dd.MM.yyyy."
-                        placeholderText="Izaberi datum"
+                        placeholderText="Izaberi datum (opciono)"
                         className="border rounded pl-10 pr-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-200"
                         calendarClassName="z-50"
                         popperClassName="z-50"
@@ -413,7 +452,6 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                         dropdownMode="select"
                       />
                     </div>
-                    {errors.datum_rodjenja && <div className="text-red-500 text-xs mt-1">* {errors.datum_rodjenja || 'Unesite datum rođenja'}</div>}
                   </div>
                   <div className="flex flex-col gap-1 col-span-2">
                     <label className="text-sm font-medium">JMBG</label>
@@ -430,7 +468,7 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                     <input className="border rounded p-2" name="mesto" value={form.mesto || ''} onChange={handleInput} onBlur={handleBlur} />
                   </div>
                   <div className="flex flex-col gap-1 col-span-2">
-                    <label className="text-sm font-medium">Fotografija</label>
+                    <label className="text-sm font-medium">Fotografija (opciono)</label>
                     <div
                       className="border-dashed border-2 rounded flex flex-col items-center justify-center py-10 text-gray-400 cursor-pointer hover:bg-gray-50 transition"
                       onClick={() => document.getElementById("file-upload")?.click()}
@@ -451,17 +489,20 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                         onChange={handleSlika}
                       />
                     </div>
-                    {errors.fotografija && <div className="text-red-500 text-xs mt-1">* {errors.fotografija || 'Unesite fotografiju'}</div>}
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium">E-pošta</label>
-                    <input className="border rounded p-2" name="email" value={form.email || ''} onChange={handleInput} onBlur={handleBlur} required />
+                    <input className="border rounded p-2" name="email" value={form.email || ''} onChange={handleInput} onBlur={handleBlur} placeholder="Unesite e-poštu" />
                     {errors.email && <div className="text-red-500 text-xs mt-1">* {errors.email || 'Unesite e-poštu'}</div>}
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium">Broj telefona</label>
-                    <input className="border rounded p-2" name="telefon" value={form.telefon || ''} onChange={handleInput} onBlur={handleBlur} />
+                    <input className="border rounded p-2" name="telefon" value={form.telefon || ''} onChange={handleInput} onBlur={handleBlur} placeholder="Unesite broj telefona" />
                     {errors.telefon && <div className="text-red-500 text-xs mt-1">* {errors.telefon || 'Unesite broj telefona'}</div>}
+                  </div>
+                  <div className="flex flex-col gap-1 col-span-2">
+                    <span className="text-xs text-gray-600">* Bar jedan od ta dva polja (e-pošta ili broj telefona) mora biti unet</span>
+                    {errors.email_ili_telefon && <div className="text-red-500 text-xs mt-1">* {errors.email_ili_telefon}</div>}
                   </div>
                   <div className="flex flex-col gap-1 col-span-2">
                     <label className="text-sm font-medium">Učitaj PDF lične karte</label>
@@ -541,7 +582,7 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                       selected={datumZavrsetka}
                       onChange={setDatumZavrsetka}
                       dateFormat="dd.MM.yyyy."
-                      placeholderText="Izaberi datum"
+                      placeholderText="Izaberi datum (opciono)"
                       className="border rounded pl-10 pr-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-200"
                       calendarClassName="z-50"
                       popperClassName="z-50"
@@ -550,7 +591,6 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                       dropdownMode="select"
                     />
                   </div>
-                  {errors.datum_zavrsetka && <div className="text-red-500 text-xs mt-1">* {errors.datum_zavrsetka || 'Unesite datum završetka rada'}</div>}
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-medium">Plata</label>
@@ -641,7 +681,12 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                 <h3 className="text-lg font-bold mb-2 text-red-600">Niste popunili sva obavezna polja!</h3>
                 <ul className="text-sm text-gray-700 mb-4 list-disc list-inside">
                   {missingFields.map(f => (
-                    <li key={f}>* Unesite {f.replace('_', ' ')}</li>
+                    <li key={f}>
+                      {f === 'email_ili_telefon' 
+                        ? '* Unesite bar jedan od sledećih: e-poštu ili broj telefona' 
+                        : `* Unesite ${f.replace('_', ' ')}`
+                      }
+                    </li>
                   ))}
                 </ul>
                 <button className="bg-indigo-600 text-white px-4 py-2 rounded font-semibold" onClick={() => setShowPopup(false)}>U redu</button>

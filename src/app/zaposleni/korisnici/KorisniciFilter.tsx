@@ -37,9 +37,7 @@ export default function KorisniciFilter({ open, onClose, onFilter, initialValues
     setValues(v => ({ ...v, [e.target.name]: e.target.value }));
   };
 
-  const handleDateChange = (name: string, value: string) => {
-    setValues(v => ({ ...v, [name]: value }));
-  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

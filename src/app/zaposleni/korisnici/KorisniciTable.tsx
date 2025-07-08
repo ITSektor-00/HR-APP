@@ -1,21 +1,18 @@
 "use client";
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
   flexRender,
-  ColumnDef,
-  ColumnOrderState,
-  VisibilityState,
 } from "@tanstack/react-table";
 import Image from 'next/image';
-import Link from 'next/link';
 import { format } from 'date-fns';
 import UrediKorisnikModal from './UrediKorisnikModal';
 import EditableCell from './EditableCell';
 import EditStavkaModal from './EditStavkaModal';
 import DeleteStavkaConfirm from './DeleteStavkaConfirm';
+import ReactDOM from 'react-dom';
 
 interface Korisnik {
   id: number;
@@ -40,6 +37,12 @@ interface Korisnik {
   datum_azuriranja?: string;
   uloga?: string;
   pristup?: string;
+  sifra?: string;
+  plata?: string;
+  period_plate?: string;
+  valuta?: string;
+  datum_rodjenja?: string;
+  [key: string]: string | number | undefined;
 }
 
 interface KorisniciTableProps {
@@ -55,6 +58,9 @@ interface KorisniciTableProps {
   loading?: boolean;
   onEdit?: (korisnik: Korisnik) => void;
   onDelete?: (id: number) => void;
+  onSortByName?: () => void;
+  onSortByNajskorijiPocetak?: () => void;
+  onSortByNajskorijiZavrsetak?: () => void;
 }
 
 const SEKTORI = [
@@ -74,6 +80,17 @@ function formatDatum(datum?: string) {
     const date = new Date(datum);
     if (isNaN(date.getTime())) return datum;
     return format(date, 'd.M.yyyy. HH:mm');
+  } catch {
+    return datum;
+  }
+}
+
+function formatDatumBezVremena(datum?: string) {
+  if (!datum) return '';
+  try {
+    const date = new Date(datum);
+    if (isNaN(date.getTime())) return datum;
+    return date.toLocaleDateString('sr-RS');
   } catch {
     return datum;
   }
@@ -113,18 +130,20 @@ export default function KorisniciTable({
   loading,
   onEdit = () => {},
   onDelete = () => {},
+  onSortByName,
+  onSortByNajskorijiPocetak,
+  onSortByNajskorijiZavrsetak,
 }: KorisniciTableProps) {
-  const [sorting, setSorting] = useState<any[]>([]);
+  const [sorting, setSorting] = useState<Array<{id: string, desc: boolean}>>([]);
   const [menuOpenRow, setMenuOpenRow] = useState<number | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
+  const [menuPopupPos, setMenuPopupPos] = useState<{top: number, left: number, showAbove: boolean}>({top: 0, left: 0, showAbove: false});
   const [hoveredCol, setHoveredCol] = useState<string | null>(null);
   const [openHeaderMenu, setOpenHeaderMenu] = useState<string | null>(null);
   const [headerMenuHover, setHeaderMenuHover] = useState<string | null>(null);
   const headerMenuTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [editCell, setEditCell] = useState<{rowIdx: number, colId: string} | null>(null);
-  const [deleteCell, setDeleteCell] = useState<{rowIdx: number, colId: string} | null>(null);
-  const cellPopupRef = useRef<HTMLDivElement | null>(null);
-  const [editModal, setEditModal] = useState<{row: any, column: any, value: string, korisnik?: Korisnik} | null>(null);
-  const [deleteModal, setDeleteModal] = useState<{row: any, column: any, value: string} | null>(null);
+  const [editModal, setEditModal] = useState<{row: unknown, column: unknown, value: string, korisnik?: Korisnik} | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{row: unknown, column: unknown, value: string} | null>(null);
 
   visibleColumns = (visibleColumns && visibleColumns.length > 0) ? visibleColumns : DEFAULT_COLUMNS;
   columnOrder = (columnOrder && columnOrder.length > 0) ? columnOrder : DEFAULT_COLUMNS;
@@ -137,13 +156,13 @@ export default function KorisniciTable({
       size: 160,
       minSize: 80,
       maxSize: 400,
-      cell: (info: any) => {
+      cell: (info: {row: {original: Korisnik}}) => {
         const k = info.row.original;
         switch (key) {
           case 'korisnik':
             return (
               <span className="flex items-center gap-2">
-                {k.fotografija ? (
+                {k.fotografija && !k.fotografija.includes('default-user.jpg') && k.fotografija.trim() !== '' ? (
                   <Image
                     src={k.fotografija}
                     alt="avatar"
@@ -175,9 +194,9 @@ export default function KorisniciTable({
             const sektorObj = SEKTORI.find(s => s.label === k.sektor);
             return <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{backgroundColor: sektorObj?.color || '#d1d5db'}}></span>{k.sektor}</span>;
           case 'datum_pocetka':
-            return formatDatum(k.datum_pocetka);
+            return formatDatumBezVremena(k.datum_pocetka);
           case 'datum_zavrsetka':
-            return formatDatum(k.datum_zavrsetka);
+            return formatDatumBezVremena(k.datum_zavrsetka);
           case 'datum_kreiranja':
             return formatDatum(k.datum_kreiranja);
           case 'datum_azuriranja':
@@ -245,7 +264,11 @@ export default function KorisniciTable({
                       className="p-2 text-left font-bold text-gray-700 relative group border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none"
                       style={{ width: header.getSize(), minWidth: 80 }}
                     >
-                      <div className="flex items-center gap-2 relative w-full pr-10 group" onMouseEnter={() => setHoveredCol(header.id)} onMouseLeave={() => setHoveredCol(null)}>
+                      <div
+                        className={`flex items-center gap-2 relative w-full group ${idx === 0 ? 'pr-10' : 'pr-10'}`}
+                        onMouseEnter={() => setHoveredCol(header.id)}
+                        onMouseLeave={() => setHoveredCol(null)}
+                      >
                         <div className="relative flex items-center">
                           <span className="font-bold">
                             {flexRender(header.column.columnDef.header, header.getContext())}
@@ -254,7 +277,7 @@ export default function KorisniciTable({
                         {/* Kebab meni u headeru kolone, sada i za prvu kolonu ali poseban stil */}
                         {(hoveredCol === header.id || openHeaderMenu === header.id || headerMenuHover === header.id) && (
                           <div
-                            className={idx === 0 ? "absolute left-3 top-1/2 -translate-y-1/2 z-40" : "absolute right-3 top-1/2 -translate-y-1/2 z-40"}
+                            className={idx === 0 ? "absolute right-3 top-1/2 -translate-y-1/2 z-40" : "absolute right-3 top-1/2 -translate-y-1/2 z-40"}
                             onMouseEnter={() => {
                               if (headerMenuTimeout.current) clearTimeout(headerMenuTimeout.current);
                               setHeaderMenuHover(header.id);
@@ -281,72 +304,60 @@ export default function KorisniciTable({
                               </svg>
                             </button>
                             {openHeaderMenu === header.id && (
-                              <div className={idx === 0 ? "absolute left-0 mt-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm" : "absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm"}>
-                                {/* Prva kolona: samo sakrij kolonu, bez ikonica */}
+                              <div className={idx === 0 ? "absolute left-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm" : "absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm"}>
+                                {/* Prva kolona: abecedno + sakrij kolonu, sortirano */}
                                 {idx === 0 ? (
-                                  <button
-                                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
-                                    onClick={() => {
-                                      setOpenHeaderMenu(null);
-                                      setHeaderMenuHover(null);
-                                      header.column.toggleVisibility?.();
-                                    }}
-                                  >
-                                    Sakrij kolonu
-                                  </button>
-                                ) : (
                                   <>
                                     <button
-                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
                                       onClick={() => {
                                         setOpenHeaderMenu(null);
                                         setHeaderMenuHover(null);
-                                        header.column.toggleVisibility?.();
+                                        if (onSortByName) onSortByName();
                                       }}
                                     >
-                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7Z" stroke="#888" strokeWidth="2"/><path d="M9.5 10.5a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0Z" stroke="#888" strokeWidth="2"/><path d="M4 4l16 16" stroke="#888" strokeWidth="2"/></svg>
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]"><path d="M7 7h10M7 12h7M7 17h4" stroke="#5B2EFF" strokeWidth="2"/><text x="2" y="22" fontSize="10" fill="#5B2EFF">A</text><text x="10" y="22" fontSize="10" fill="#5B2EFF">Z</text></svg>
+                                      Poređaj abecedno
+                                    </button>
+                                    <button
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
+                                      onClick={() => {
+                                        setOpenHeaderMenu(null);
+                                        setHeaderMenuHover(null);
+                                        if (onToggleColumn) onToggleColumn(header.column.id);
+                                      }}
+                                    >
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]">
+                                        <path d="M1 12C1 12 5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z" stroke="#5B2EFF" strokeWidth="2"/>
+                                        <circle cx="12" cy="12" r="3" stroke="#5B2EFF" strokeWidth="2"/>
+                                      </svg>
                                       Sakrij kolonu
                                     </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    {/* Pomeri ulevo, ali samo ako ova kolona nije odmah desno od 'korisnik' */}
+                                    {columnOrder.indexOf(header.column.id) > 1 && columnOrder[columnOrder.indexOf(header.column.id) - 1] !== 'korisnik' && (
+                                      <button
+                                        className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
+                                        onClick={() => {
+                                          setOpenHeaderMenu(null);
+                                          setHeaderMenuHover(null);
+                                          const idx2 = columnOrder.indexOf(header.column.id);
+                                          if (idx2 > 0) {
+                                            const newOrder = [...columnOrder];
+                                            [newOrder[idx2-1], newOrder[idx2]] = [newOrder[idx2], newOrder[idx2-1]];
+                                            onOrderChange(newOrder);
+                                          }
+                                        }}
+                                      >
+                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]"><path d="M15 19l-7-7 7-7" stroke="#5B2EFF" strokeWidth="2"/></svg>
+                                        Pomeri ulevo
+                                      </button>
+                                    )}
+                                    {/* Pomeri udesno */}
                                     <button
-                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
-                                      onClick={() => {
-                                        setOpenHeaderMenu(null);
-                                        setHeaderMenuHover(null);
-                                        header.column.toggleSorting?.(false);
-                                      }}
-                                    >
-                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 4v16m0 0l-4-4m4 4l4-4" stroke="#888" strokeWidth="2"/></svg>
-                                      Sortiraj uzlazno
-                                    </button>
-                                    <button
-                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
-                                      onClick={() => {
-                                        setOpenHeaderMenu(null);
-                                        setHeaderMenuHover(null);
-                                        header.column.toggleSorting?.(true);
-                                      }}
-                                    >
-                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 20V4m0 0l-4 4m4-4l4 4" stroke="#888" strokeWidth="2"/></svg>
-                                      Sortiraj silazno
-                                    </button>
-                                    <button
-                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
-                                      onClick={() => {
-                                        setOpenHeaderMenu(null);
-                                        setHeaderMenuHover(null);
-                                        const idx2 = columnOrder.indexOf(header.column.id);
-                                        if (idx2 > 0) {
-                                          const newOrder = [...columnOrder];
-                                          [newOrder[idx2-1], newOrder[idx2]] = [newOrder[idx2], newOrder[idx2-1]];
-                                          onOrderChange(newOrder);
-                                        }
-                                      }}
-                                    >
-                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="#888" strokeWidth="2"/></svg>
-                                      Pomeri ulevo
-                                    </button>
-                                    <button
-                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left"
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
                                       onClick={() => {
                                         setOpenHeaderMenu(null);
                                         setHeaderMenuHover(null);
@@ -358,9 +369,52 @@ export default function KorisniciTable({
                                         }
                                       }}
                                     >
-                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="#888" strokeWidth="2"/></svg>
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]">
+                                        <path d="M9 5l7 7-7 7" stroke="#5B2EFF" strokeWidth="2"/>
+                                      </svg>
                                       Pomeri udesno
                                     </button>
+                                    {/* Sakrij kolonu */}
+                                    <button
+                                      className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
+                                      onClick={() => {
+                                        setOpenHeaderMenu(null);
+                                        setHeaderMenuHover(null);
+                                        if (onToggleColumn) onToggleColumn(header.column.id);
+                                      }}
+                                    >
+                                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]">
+                                        <path d="M1 12C1 12 5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z" stroke="#5B2EFF" strokeWidth="2"/>
+                                        <circle cx="12" cy="12" r="3" stroke="#5B2EFF" strokeWidth="2"/>
+                                      </svg>
+                                      Sakrij kolonu
+                                    </button>
+                                    {header.id === 'datum_pocetka' && (
+                                      <button
+                                        className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
+                                        onClick={() => {
+                                          setOpenHeaderMenu(null);
+                                          setHeaderMenuHover(null);
+                                          if (onSortByNajskorijiPocetak) onSortByNajskorijiPocetak();
+                                        }}
+                                      >
+                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]"><path d="M12 4v16m0 0l-4-4m4 4l4-4" stroke="#5B2EFF" strokeWidth="2"/></svg>
+                                        Sortiraj od najskorijeg početka zaposlenja
+                                      </button>
+                                    )}
+                                    {header.id === 'datum_zavrsetka' && (
+                                      <button
+                                        className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
+                                        onClick={() => {
+                                          setOpenHeaderMenu(null);
+                                          setHeaderMenuHover(null);
+                                          if (onSortByNajskorijiZavrsetak) onSortByNajskorijiZavrsetak();
+                                        }}
+                                      >
+                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]"><path d="M12 4v16m0 0l-4-4m4 4l4-4" stroke="#5B2EFF" strokeWidth="2"/></svg>
+                                        Sortiraj od najskorijeg završetka zaposlenja
+                                      </button>
+                                    )}
                                   </>
                                 )}
                               </div>
@@ -424,7 +478,7 @@ export default function KorisniciTable({
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </td>
-                    {row.getVisibleCells().map((cell, cellIdx) => {
+                    {row.getVisibleCells().map((cell) => {
                       // Ne prikazuj editable za checkbox i akcije kolonu
                       const isEditable = cell.column.id !== 'akcije' && cell.column.id !== 'select';
                       return (
@@ -473,9 +527,6 @@ export default function KorisniciTable({
                                   setEditModal({ row, column, value: row.original[column.id] || '' });
                                 }
                               }}
-                              onDelete={(row, column) => {
-                                setDeleteModal({ row, column, value: row.original[column.id] || '' });
-                              }}
                             />
                           ) : (
                             flexRender(cell.column.columnDef.cell, cell.getContext())
@@ -504,7 +555,36 @@ export default function KorisniciTable({
                             className="p-1 rounded hover:bg-gray-100 focus:outline-none transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setMenuOpenRow(menuOpenRow === row.original.id ? null : row.original.id);
+                              const btn = e.currentTarget as HTMLButtonElement;
+                              if (menuOpenRow === row.original.id) {
+                                setMenuOpenRow(null);
+                                setMenuAnchor(null);
+                              } else {
+                                setMenuOpenRow(row.original.id);
+                                setMenuAnchor(btn);
+                                // Izračunaj poziciju popup-a
+                                const rect = btn.getBoundingClientRect();
+                                const popupWidth = 180;
+                                const popupHeight = 100;
+                                const padding = 8;
+                                let left = rect.left + rect.width / 2 - popupWidth / 2;
+                                let top = rect.bottom + 2;
+                                let showAbove = false;
+                                if (left + popupWidth + padding > window.innerWidth) {
+                                  left = window.innerWidth - popupWidth - padding;
+                                }
+                                if (left < padding) {
+                                  left = padding;
+                                }
+                                if (top + popupHeight + padding > window.innerHeight) {
+                                  top = rect.top - popupHeight - 2;
+                                  showAbove = true;
+                                }
+                                if (top < padding) {
+                                  top = padding;
+                                }
+                                setMenuPopupPos({top, left, showAbove});
+                              }
                             }}
                             title="Više opcija"
                           >
@@ -515,14 +595,25 @@ export default function KorisniciTable({
                             </svg>
                           </button>
                           
-                          {/* Dropdown meni */}
-                          {menuOpenRow === row.original.id && (
-                            <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-md shadow-lg min-w-[140px] text-sm py-1">
+                          {/* Portal popup meni */}
+                          {menuOpenRow === row.original.id && menuAnchor && typeof window !== 'undefined' && ReactDOM.createPortal(
+                            <div
+                              className="bg-white border border-gray-200 rounded-md shadow-lg min-w-[140px] text-sm py-1 z-[9999]"
+                              style={{
+                                position: 'fixed',
+                                top: menuPopupPos.top,
+                                left: menuPopupPos.left,
+                                width: 180,
+                                boxShadow: '0 8px 32px 0 rgba(60,60,60,0.18)',
+                              }}
+                              onClick={e => e.stopPropagation()}
+                            >
                               <button 
                                 className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left transition-colors"
                                 onClick={() => {
                                   onEdit(row.original);
                                   setMenuOpenRow(null);
+                                  setMenuAnchor(null);
                                 }}
                               >
                                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
@@ -538,6 +629,7 @@ export default function KorisniciTable({
                                     onDelete(row.original.id);
                                   }
                                   setMenuOpenRow(null);
+                                  setMenuAnchor(null);
                                 }}
                               >
                                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
@@ -546,7 +638,8 @@ export default function KorisniciTable({
                                 </svg>
                                 Obriši
                               </button>
-                            </div>
+                            </div>,
+                            document.body
                           )}
                         </div>
                       </div>
@@ -562,8 +655,8 @@ export default function KorisniciTable({
       {/* Zatvaranje menija kada se klikne van tabele */}
       {menuOpenRow && (
         <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setMenuOpenRow(null)}
+          className="fixed inset-0 z-[9998]" 
+          onClick={() => { setMenuOpenRow(null); setMenuAnchor(null); }}
         />
       )}
       {/* Modal za uređivanje stavke */}
@@ -571,7 +664,32 @@ export default function KorisniciTable({
         <UrediKorisnikModal
           open={!!editModal}
           onClose={() => setEditModal(null)}
-          korisnik={editModal.korisnik as any}
+          korisnik={{
+            ime: editModal.korisnik.ime || '',
+            prezime: editModal.korisnik.prezime || '',
+            pol: editModal.korisnik.pol || '',
+            datum_rodjenja: editModal.korisnik.datum_rodjenja || '',
+            jmbg: editModal.korisnik.jmbg || '',
+            adresa: editModal.korisnik.adresa || '',
+            mesto: editModal.korisnik.mesto || '',
+            grad: editModal.korisnik.grad || '',
+            fotografija: editModal.korisnik.fotografija || '',
+            email: editModal.korisnik.email || '',
+            telefon: editModal.korisnik.telefon || '',
+            pozicija: editModal.korisnik.pozicija || '',
+            sektor: editModal.korisnik.sektor || '',
+            status_zaposlenja: editModal.korisnik.status_zaposlenja || '',
+            vrsta_zaposlenja: editModal.korisnik.vrsta_zaposlenja || '',
+            broj_radne_dozvole: editModal.korisnik.broj_radne_dozvole || '',
+            datum_pocetka: editModal.korisnik.datum_pocetka || '',
+            datum_zavrsetka: editModal.korisnik.datum_zavrsetka || '',
+            uloga: editModal.korisnik.uloga || '',
+            pristup: editModal.korisnik.pristup || '',
+            sifra: editModal.korisnik.sifra || '',
+            plata: editModal.korisnik.plata || '',
+            period_plate: editModal.korisnik.period_plate || '',
+            valuta: editModal.korisnik.valuta || '',
+          }}
           onSave={async (data) => {
             // Sačuvaj izmenu korisnika u backendu
             if (editModal && editModal.korisnik) {
@@ -594,7 +712,7 @@ export default function KorisniciTable({
           open={!!editModal}
           onClose={() => setEditModal(null)}
           stavka={{ naslov: editModal.value, opis: '' }}
-          onSave={(data) => {
+          onSave={() => {
             // TODO: Sačuvaj izmenu u backendu ili state-u
             setEditModal(null);
           }}
