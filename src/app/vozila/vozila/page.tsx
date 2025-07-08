@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import ColumnsMenu from './ColumnsMenu';
 import ExportModal from './ExportModal';
 import NoviVoziloModal from './NoviVoziloModal';
+import { format } from 'date-fns';
 
 const COLUMN_CONFIG = [
   { key: "naslov", label: "Naslov" },
@@ -42,12 +43,28 @@ export default function VozilaPage() {
   const [columnsOpen, setColumnsOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [novoOpen, setNovoOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    naslov: '',
+    opis: '',
+    broj_sasije: '',
+    proizvodjac: '',
+    komercijalna_oznaka: '',
+    datum_kreiranja_od: '',
+    datum_kreiranja_do: '',
+    datum_azuriranja_od: '',
+    datum_azuriranja_do: '',
+  });
 
-  const refreshVozila = async () => {
+  const refreshVozila = async (customFilters = filters) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/vozila');
+      const params = new URLSearchParams();
+      Object.entries(customFilters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      const res = await fetch('/api/vozila?' + params.toString());
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Greška pri učitavanju vozila');
       setVozila(data);
@@ -102,10 +119,57 @@ export default function VozilaPage() {
             </span>
             Kolone <span className="ml-1 bg-indigo-600 text-white rounded px-2">{visibleColumns.length}</span>
           </Button>
-          <Button variant="outline" disabled className="opacity-50 cursor-not-allowed hover:bg-gray-50 active:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:outline-none">Filteri</Button>
+          <Button variant="outline" onClick={() => setFilterOpen(f => !f)} className="bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            {filterOpen ? 'Zatvori filtere' : 'Filteri'}
+          </Button>
           <ColumnsMenu open={columnsOpen} onClose={() => setColumnsOpen(false)} selected={visibleColumns} onChange={setVisibleColumns} />
         </div>
       </div>
+      {filterOpen && (
+        <div className="bg-gray-100 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Naslov</label>
+              <input type="text" className="w-full border rounded px-3 py-2" placeholder="Pretraga..." value={filters.naslov} onChange={e => setFilters(f => ({...f, naslov: e.target.value}))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Opis</label>
+              <input type="text" className="w-full border rounded px-3 py-2" placeholder="Pretraga..." value={filters.opis} onChange={e => setFilters(f => ({...f, opis: e.target.value}))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Broj šasije</label>
+              <input type="text" className="w-full border rounded px-3 py-2" placeholder="Pretraga..." value={filters.broj_sasije} onChange={e => setFilters(f => ({...f, broj_sasije: e.target.value}))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Proizvođač</label>
+              <input type="text" className="w-full border rounded px-3 py-2" placeholder="Pretraga..." value={filters.proizvodjac} onChange={e => setFilters(f => ({...f, proizvodjac: e.target.value}))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Komercijalna oznaka</label>
+              <input type="text" className="w-full border rounded px-3 py-2" placeholder="Pretraga..." value={filters.komercijalna_oznaka} onChange={e => setFilters(f => ({...f, komercijalna_oznaka: e.target.value}))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Datum kreiranja</label>
+              <div className="flex gap-2">
+                <input type="date" className="w-full border rounded px-3 py-2" value={filters.datum_kreiranja_od} onChange={e => setFilters(f => ({...f, datum_kreiranja_od: e.target.value}))} />
+                <span className="flex items-center">→</span>
+                <input type="date" className="w-full border rounded px-3 py-2" value={filters.datum_kreiranja_do} onChange={e => setFilters(f => ({...f, datum_kreiranja_do: e.target.value}))} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Datum ažuriranja</label>
+              <div className="flex gap-2">
+                <input type="date" className="w-full border rounded px-3 py-2" value={filters.datum_azuriranja_od} onChange={e => setFilters(f => ({...f, datum_azuriranja_od: e.target.value}))} />
+                <span className="flex items-center">→</span>
+                <input type="date" className="w-full border rounded px-3 py-2" value={filters.datum_azuriranja_do} onChange={e => setFilters(f => ({...f, datum_azuriranja_do: e.target.value}))} />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => refreshVozila()} className="bg-[#3A3CA6] text-white font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors">Pretraži</Button>
+          </div>
+        </div>
+      )}
       <NoviVoziloModal open={novoOpen} onClose={() => setNovoOpen(false)} onSuccess={refreshVozila} />
       <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} vozila={vozila} />
       <div className="overflow-x-auto">
