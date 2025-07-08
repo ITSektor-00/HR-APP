@@ -30,8 +30,8 @@ export default function PrijavaPage() {
       const data = await res.json();
       
       if (data.isLoggedIn) {
-        // Preusmeri na glavnu stranicu ako je već prijavljen
-        window.location.replace("/");
+        // Preusmeri na dashboard ako je već prijavljen
+        window.location.replace("/dashboard");
         return;
       }
     } catch (error) {

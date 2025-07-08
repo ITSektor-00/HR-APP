@@ -48,6 +48,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Ako korisnik pokuša da pristupi /prijava ili /registracija dok je prijavljen, preusmeri ga na /dashboard
+  if ((pathname.startsWith('/prijava') || pathname.startsWith('/registracija')) && token && token !== '') {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
   // Ako nema tokena, redirektuj na /prijava
   console.log('Nema tokena, REDIRECT na /prijava')
   return NextResponse.redirect(new URL('/prijava', request.url))
