@@ -165,3 +165,19 @@ button[aria-label="Otvori meni"] {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+.animate-bounce {
+  animation: bounce 1.2s infinite alternate;
+}

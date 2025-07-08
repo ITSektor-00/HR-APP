@@ -24,8 +24,14 @@ export function middleware(request: NextRequest) {
   console.log('All cookies:', allCookies.map(c => `${c.name}=${c.value}`))
   console.log('=======================')
 
-  // Dozvoli pristup /prijava i /registracija bez provere
-  if (pathname.startsWith('/prijava') || pathname.startsWith('/registracija')) {
+  // Dozvoli pristup API rutama bez provere
+  if (pathname.startsWith('/api/')) {
+    console.log('API ruta, dozvoljen pristup:', pathname)
+    return NextResponse.next()
+  }
+
+  // Dozvoli pristup /prijava, /registracija i root (/) bez provere
+  if (pathname === '/' || pathname.startsWith('/prijava') || pathname.startsWith('/registracija')) {
     console.log('Dozvoljen pristup:', pathname)
     return NextResponse.next()
   }

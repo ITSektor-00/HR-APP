@@ -5,17 +5,41 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Mail, Lock } from "lucide-react";
 
 export default function PrijavaPage() {
   const [email, setEmail] = useState("");
   const [lozinka, setLozinka] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     // Uvek koristi light mod
     document.documentElement.classList.remove("dark");
+    
+    // Proveri da li je korisnik već prijavljen
+    checkAuthStatus();
   }, []);
+
+  async function checkAuthStatus() {
+    try {
+      const res = await fetch("/api/provera-stanja", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      
+      if (data.isLoggedIn) {
+        // Preusmeri na glavnu stranicu ako je već prijavljen
+        window.location.replace("/");
+        return;
+      }
+    } catch (error) {
+      console.error("Greška pri proveri stanja:", error);
+    } finally {
+      setCheckingAuth(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,10 +61,27 @@ export default function PrijavaPage() {
     window.location.replace("/?prijava=uspesna");
   }
 
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-100/80 to-primary-300/60">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-100/80 to-primary-300/60 relative">
       <header className="flex flex-col items-center mb-8 select-none">
-        <Image src="/logo.svg" alt="Logo" width={64} height={64} className="mb-2" />
+        <div className="relative group">
+          <Image 
+            src="/logo.svg" 
+            alt="Logo" 
+            width={64} 
+            height={64} 
+            className="mb-2 transition-all duration-300 group-hover:scale-110 group-hover:animate-pulse cursor-pointer" 
+          />
+          <div className="absolute inset-0 rounded-full bg-primary-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-ping"></div>
+        </div>
         <span className="text-xl font-semibold tracking-widest text-[#3A3CA6]" style={{letterSpacing: '0.18em', fontFamily: 'InterVariable, sans-serif'}}>HR PLATFORMA</span>
       </header>
       <Card className={cn("w-[370px] h-[340px] shadow-2xl glassmorphism border-none bg-white/70 backdrop-blur-lg animate-fade-in-up flex flex-col justify-center")}> 
@@ -49,24 +90,26 @@ export default function PrijavaPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type="email"
                 placeholder="Email adresa"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                className="rounded-xl shadow-inner focus:ring-2 focus:ring-primary-400"
+                className="pl-10 rounded-xl shadow-inner focus:ring-2 focus:ring-primary-400"
               />
             </div>
-            <div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type="password"
                 placeholder="Lozinka"
                 value={lozinka}
                 onChange={e => setLozinka(e.target.value)}
                 required
-                className="rounded-xl shadow-inner focus:ring-2 focus:ring-primary-400"
+                className="pl-10 rounded-xl shadow-inner focus:ring-2 focus:ring-primary-400"
               />
             </div>
             {error && <div className="text-red-500 text-center font-semibold animate-shake">{error}</div>}
