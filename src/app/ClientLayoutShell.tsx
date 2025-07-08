@@ -10,15 +10,14 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
   const [hovering, setHovering] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const { mounted } = useThemeContext()
+  const { theme, mounted } = useThemeContext()
 
   useEffect(() => {
     const checkAuth = () => {
       const path = window.location.pathname
       const isAuthRoute = path === '/prijava' || path === '/registracija'
-      const isPublicRoot = path === '/'
       
-      if (isAuthRoute || isPublicRoot) {
+      if (isAuthRoute) {
         setIsAuthenticated(false)
         setIsLoading(false)
         return
@@ -94,14 +93,12 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
   }
 
   let isAuthRoute = false
-  let isPublicRoot = false
   if (typeof window !== 'undefined') {
     const path = window.location.pathname
     isAuthRoute = path === '/prijava' || path === '/registracija'
-    isPublicRoot = path === '/'
   }
 
-  if (isAuthRoute || isPublicRoot) {
+  if (isAuthRoute) {
     return <div className="min-h-screen w-full flex items-center justify-center bg-[var(--main-bg)]">{children}</div>
   }
 
@@ -113,13 +110,43 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
   const isSidebarOpen = sidebarOpen || hovering
 
   return (
-    <div className="flex min-h-screen w-full bg-[var(--main-bg)]">
-      <SidebarNav sidebarOpen={isSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-1 w-full max-w-full mx-auto px-2 sm:px-6 md:px-8 py-4">
-          {children}
-        </main>
+    <div key={theme} className="h-screen w-full flex flex-col bg-[var(--main-bg)] overflow-x-hidden transition-all duration-300">
+      {/* Navbar skroz gore */}
+      <Navbar />
+      {/* Flex kontejner za sidebar i main content */}
+      <div className="flex flex-1 min-h-0 overflow-x-hidden">
+        {/* Sidebar */}
+        <aside
+          className={`group sticky top-0 h-[calc(100vh-48px)] bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 z-20 ${isSidebarOpen ? 'w-64' : 'w-12'} px-2 py-4 overflow-y-auto custom-scrollbar pr-3 overflow-x-hidden lg:block hidden sm:flex sm:relative ${sidebarOpen ? 'sm:fixed sm:left-0 sm:top-12' : ''}`}
+          style={{ transitionProperty: 'width,background-color,border-color' }}
+          onMouseEnter={() => { if (!sidebarOpen && window.innerWidth >= 1024) setHovering(true) }}
+          onMouseLeave={() => { if (!sidebarOpen && window.innerWidth >= 1024) setHovering(false) }}
+        >
+          {/* Dugme za zatvaranje - prikazuje se samo kada je sidebar otvoren klikom */}
+          {sidebarOpen && (
+            <button
+              className="absolute top-1/2 right-0 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-[var(--border-color)] text-[var(--text-secondary)] rounded-full shadow border border-[var(--border-color)] transition-colors duration-200 z-30 hover:bg-[#3A3CA6] hover:text-white"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Zatvori meni"
+              style={{ boxShadow: '0 2px 8px 0 rgba(58,60,166,0.10)' }}
+            >
+              <span className="text-xl">«</span>
+            </button>
+          )}
+          {/* Sidebar sadržaj */}
+          <div className="flex-1 flex flex-col items-center">
+            <SidebarNav sidebarOpen={isSidebarOpen} />
+          </div>
+        </aside>
+        {/* Overlay za mobilne uređaje */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        {/* Main content */}
+        <main className="flex-1 p-4 sm:p-6 bg-[var(--main-bg)] min-h-0 transition-all duration-300 overflow-x-hidden w-full">{children}</main>
       </div>
     </div>
   )

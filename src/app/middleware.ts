@@ -30,8 +30,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Dozvoli pristup /prijava, /registracija i root (/) bez provere
-  if (pathname === '/' || pathname.startsWith('/prijava') || pathname.startsWith('/registracija')) {
+  // Dozvoli pristup /prijava i /registracija bez provere
+  if (pathname.startsWith('/prijava') || pathname.startsWith('/registracija')) {
     console.log('Dozvoljen pristup:', pathname)
     return NextResponse.next()
   }
@@ -46,11 +46,6 @@ export function middleware(request: NextRequest) {
   if (token && token !== '') {
     console.log('Token postoji, dozvoljen pristup.')
     return NextResponse.next()
-  }
-
-  // Ako korisnik pokuša da pristupi /prijava ili /registracija dok je prijavljen, preusmeri ga na /dashboard
-  if ((pathname.startsWith('/prijava') || pathname.startsWith('/registracija')) && token && token !== '') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   // Ako nema tokena, redirektuj na /prijava

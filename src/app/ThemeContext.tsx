@@ -54,16 +54,37 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/profil', { credentials: 'include' })
-      .then(res => {
-        if (res.ok) return res.json();
-        return null;
-      })
-      .then(data => {
-        if (data) setUser(data);
+    async function checkAndFetchProfile() {
+      try {
+        // Ne šalji zahteve na /prijava i /registracija rutama
+        if (typeof window !== 'undefined') {
+          const path = window.location.pathname;
+          if (path === '/prijava' || path === '/registracija') {
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+        }
+        // Prvo proveri da li je korisnik prijavljen
+        const resAuth = await fetch('/api/provera-stanja', { credentials: 'include' });
+        const dataAuth = await resAuth.json();
+        if (!dataAuth.isLoggedIn) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        // Ako jeste, tek onda fetchuj profil
+        const res = await fetch('/api/profil', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        }
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch {
+        setLoading(false);
+      }
+    }
+    checkAndFetchProfile();
   }, []);
 
   return (
