@@ -144,6 +144,7 @@ export default function KorisniciTable({
   const headerMenuTimeout = useRef<NodeJS.Timeout | null>(null);
   const [editModal, setEditModal] = useState<{row: unknown, column: unknown, value: string, korisnik?: Korisnik} | null>(null);
   const [deleteModal, setDeleteModal] = useState<{row: unknown, column: unknown, value: string} | null>(null);
+  const [columnSizing, setColumnSizing] = useState({});
 
   visibleColumns = (visibleColumns && visibleColumns.length > 0) ? visibleColumns : DEFAULT_COLUMNS;
   columnOrder = (columnOrder && columnOrder.length > 0) ? columnOrder : DEFAULT_COLUMNS;
@@ -216,6 +217,7 @@ export default function KorisniciTable({
       sorting,
       columnOrder,
       columnVisibility: Object.fromEntries((columnOrder ?? []).map(k => [k, visibleColumns.includes(k)])),
+      columnSizing,
     },
     onSortingChange: setSorting,
     onColumnOrderChange: (updaterOrValue) => {
@@ -225,6 +227,7 @@ export default function KorisniciTable({
         onOrderChange(updaterOrValue);
       }
     },
+    onColumnSizingChange: setColumnSizing,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableColumnResizing: true,
@@ -245,7 +248,7 @@ export default function KorisniciTable({
         </div>
       ) : (
         <div className="overflow-x-auto w-full border-t border-l border-r border-gray-300 rounded-t-xl">
-          <table className="min-w-full divide-y divide-gray-300 border-separate border-spacing-0">
+          <table className="min-w-full table-fixed border-collapse divide-y divide-gray-300">
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id} className="bg-[#f5f6fa]">
@@ -262,7 +265,11 @@ export default function KorisniciTable({
                     <th
                       key={header.id}
                       className="p-2 text-left font-bold text-gray-700 relative group border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none"
-                      style={{ width: header.getSize(), minWidth: 80 }}
+                      style={{
+                        width: header.getSize() ? header.getSize() + 'px' : undefined,
+                        minWidth: header.column.columnDef.minSize ? header.column.columnDef.minSize + 'px' : '80px',
+                        maxWidth: header.column.columnDef.maxSize ? header.column.columnDef.maxSize + 'px' : undefined
+                      }}
                     >
                       <div
                         className={`flex items-center gap-2 relative w-full group ${idx === 0 ? 'pr-10' : 'pr-10'}`}
@@ -423,20 +430,21 @@ export default function KorisniciTable({
                         )}
                         {/* Resize handle ili dekorativna linija - uvek isto pozicionirana i iste visine */}
                         <div
-                          className="absolute top-1/2 -translate-y-1/2 right-0 h-[24px] w-2 flex items-center justify-center z-30"
+                          className="absolute top-1/2 -translate-y-1/2 right-0 h-[32px] w-5 flex items-center justify-center z-50"
                           style={{ pointerEvents: header.column.getCanResize && header.column.getCanResize() ? 'auto' : 'none' }}
                         >
                           <div
                             className={
-                              `h-full w-px rounded ${
-                                (header.column.getCanResize && header.column.getCanResize())
-                                  ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-gray-300')
-                                  : 'bg-gray-200'
-                              } transition-all`
+                              `h-full w-1 rounded transition-all duration-100 ` +
+                              ((header.column.getCanResize && header.column.getCanResize())
+                                ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-blue-400')
+                                : 'bg-gray-300')
                             }
                             style={{ cursor: header.column.getCanResize && header.column.getCanResize() ? 'col-resize' : 'default' }}
-                            onMouseDown={header.column.getCanResize && header.column.getCanResize() ? header.getResizeHandler() : undefined}
-                            onTouchStart={header.column.getCanResize && header.column.getCanResize() ? header.getResizeHandler() : undefined}
+                            onMouseDown={header.column.getCanResize && header.column.getCanResize() && header.getResizeHandler ? header.getResizeHandler() : undefined}
+                            onTouchStart={header.column.getCanResize && header.column.getCanResize() && header.getResizeHandler ? header.getResizeHandler() : undefined}
+                            onMouseEnter={() => setHoveredCol(header.id)}
+                            onMouseLeave={() => setHoveredCol(null)}
                           />
                         </div>
                       </div>
@@ -485,7 +493,11 @@ export default function KorisniciTable({
                         <td
                           key={cell.id}
                           className="p-2 text-[13px] bg-white transition-all duration-300 overflow-visible text-ellipsis whitespace-nowrap relative group"
-                          style={{ width: cell.column.getSize(), minWidth: 80 }}
+                          style={{
+                            width: cell.column.getSize() ? cell.column.getSize() + 'px' : undefined,
+                            minWidth: cell.column.columnDef.minSize ? cell.column.columnDef.minSize + 'px' : '80px',
+                            maxWidth: cell.column.columnDef.maxSize ? cell.column.columnDef.maxSize + 'px' : undefined
+                          }}
                         >
                           {isEditable ? (
                             <EditableCell

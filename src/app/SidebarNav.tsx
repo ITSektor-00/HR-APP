@@ -1,9 +1,11 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React from 'react'
 import DynamicIcon from './components/DynamicIcon'
+import SidebarControl from "./SidebarControl";
+import { useSidebarMode } from "./ClientLayoutShell";
 
 interface NavLink {
   href: string
@@ -73,10 +75,24 @@ const sections = [
 
 export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   const pathname = usePathname()
+  const { mode, setMode } = useSidebarMode();
+  const [popupOpen, setPopupOpen] = React.useState(false);
+  const popupRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!popupOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setPopupOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [popupOpen]);
 
   return (
-    <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'} overflow-x-hidden`}>
-      <div className="flex flex-col w-full">
+    <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'} overflow-x-hidden`} style={{ position: 'relative', height: '100%' }}>
+      <div className="flex flex-col w-full flex-1">
         <SidebarItem
           href="/"
           icon={<DynamicIcon iconName="komandnaTabla" alt="Komandna tabla" />}
@@ -84,31 +100,51 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
           active={pathname === '/'}
           sidebarOpen={sidebarOpen}
         />
-      </div>
-      {sections.map((section, idx) => (
-        <div key={section.title} className="flex flex-col w-full mt-1.5">
-          {!sidebarOpen && idx !== 0 && (
-            <div className="w-7 h-0.5 bg-[var(--border-color)] mx-auto my-1 rounded-full opacity-70" />
-          )}
-          {sidebarOpen && (
-            <div className="text-[14px] text-[var(--text-secondary)] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
-              {section.title}
+        {sections.map((section, idx) => (
+          <div key={section.title} className="flex flex-col w-full mt-1.5">
+            {!sidebarOpen && idx !== 0 && (
+              <div className="w-7 h-0.5 bg-[var(--border-color)] mx-auto my-1 rounded-full opacity-70" />
+            )}
+            {sidebarOpen && (
+              <div className="text-[14px] text-[var(--text-secondary)] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
+                {section.title}
+              </div>
+            )}
+            <div className="flex flex-col gap-0.5 w-full">
+              {section.links.map((link) => (
+                <SidebarItem
+                  key={link.href}
+                  href={link.href}
+                  icon={link.icon}
+                  label={link.label}
+                  active={pathname === link.href}
+                  sidebarOpen={sidebarOpen}
+                />
+              ))}
             </div>
-          )}
-          <div className="flex flex-col gap-0.5 w-full">
-            {section.links.map((link) => (
-              <SidebarItem
-                key={link.href}
-                href={link.href}
-                icon={link.icon}
-                label={link.label}
-                active={pathname === link.href}
-                sidebarOpen={sidebarOpen}
-              />
-            ))}
           </div>
+        ))}
+        {/* Ikonica sidebar-control ostaje odmah ispod sekcija, popup je fiksiran u donjem levom uglu sidebar-a */}
+        <div className={`hidden lg:flex flex-col mt-6 mb-2 ${sidebarOpen ? 'w-full items-start pl-0' : 'w-12 justify-center items-center'}`}>
+          <img
+            src="/ikonice/sidebar-control.svg"
+            alt="Sidebar control"
+            className="w-5 h-5 cursor-pointer hover:bg-gray-100 rounded-xl p-0 transition-all"
+            onClick={() => setPopupOpen((o) => !o)}
+            style={{ userSelect: 'none' }}
+          />
         </div>
-      ))}
+      </div>
+      {/* Popup je fiksiran u donjem levom uglu sidebar-a, nezavisan od ikonice */}
+      {popupOpen && (
+        <div
+          ref={popupRef}
+          className="flex flex-col items-stretch bg-white rounded-xl shadow-xl border border-gray-200 py-2 px-2 z-50"
+          style={{ position: 'fixed', left: sidebarOpen ? 40 : 56, bottom: 16, minWidth: 110 }}
+        >
+          <SidebarControl value={mode} onChange={(m) => { setMode(m); setPopupOpen(false); }} />
+        </div>
+      )}
     </nav>
   )
 }
