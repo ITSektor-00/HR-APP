@@ -244,8 +244,8 @@ export default function KorisniciTable({
           </div>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="table-fixed w-full text-sm">
+        <div className="overflow-x-auto w-full border-t border-l border-r border-gray-300 rounded-t-xl">
+          <table className="min-w-full divide-y divide-gray-300 border-separate border-spacing-0">
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id} className="bg-[#f5f6fa]">

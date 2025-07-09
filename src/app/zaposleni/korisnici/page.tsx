@@ -8,6 +8,7 @@ import ExportModal from './ExportModal';
 import ColumnsMenu from './ColumnsMenu';
 import { Button } from '@/components/ui/button';
 import KorisniciFilter, { KorisniciFilterValues } from './KorisniciFilter';
+import KorisniciStatistika from './KorisniciStatistika';
 
 
 interface Korisnik {
@@ -102,6 +103,7 @@ export default function KorisniciPage() {
   const [page, setPage] = useState(1);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState<KorisniciFilterValues>({});
+  const [activeTab, setActiveTab] = useState<'tabela' | 'statistika'>('tabela');
 
   useEffect(() => {
     fetchKorisnici(filterValues);
@@ -323,116 +325,144 @@ export default function KorisniciPage() {
         </Button>
       </div>
 
-      {/* Glavni kontejner sa tabelom i kontrolama */}
-      <div className="bg-white rounded-xl shadow p-4 sm:p-6">
-        {/* Naslov tabele i kontrole */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-          <h2 className="text-2xl font-semibold">Tabela</h2>
-          <div className="flex flex-wrap items-center gap-2 justify-end">
-                          {selectedIds.length > 0 && (
-               <Button variant="destructive" onClick={async () => {
-                 const confirmed = window.confirm('Da li ste sigurni da želite da obrišete izabrane korisnike?');
-                 if (confirmed) {
-                   for (const id of selectedIds) {
-                     await handleDelete(id);
-                   }
-                   setSelectedIds([]);
-                 }
-               }} className="flex items-center gap-2 order-1 sm:order-none">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect x="6" y="7" width="12" height="12" rx="2" stroke="#fff" strokeWidth="2"/><path d="M9 7V5a3 3 0 1 1 6 0v2" stroke="#fff" strokeWidth="2"/></svg>
-                Obriši ({selectedIds.length})
+      {/* Tabovi za prikaz */}
+      <div className="flex gap-8 border-b border-gray-200 mb-8 relative">
+        <button
+          className={`flex items-center gap-2 px-2 pb-2 font-semibold text-lg transition-colors duration-150 focus:outline-none ${activeTab === 'tabela' ? 'text-indigo-700' : 'text-gray-800'}`}
+          style={{ position: 'relative' }}
+          onClick={() => setActiveTab('tabela')}
+        >
+          <Image src="/table.svg" alt="Tabela" width={22} height={22} />
+          Tabela
+          {activeTab === 'tabela' && <span className="absolute left-0 right-0 -bottom-[2px] h-1 bg-indigo-600 rounded-full" />}
+        </button>
+        <button
+          className={`flex items-center gap-2 px-2 pb-2 font-semibold text-lg transition-colors duration-150 focus:outline-none ${activeTab === 'statistika' ? 'text-indigo-700' : 'text-gray-800'}`}
+          style={{ position: 'relative' }}
+          onClick={() => setActiveTab('statistika')}
+        >
+          <Image src="/statistic.svg" alt="Statistika" width={22} height={22} />
+          Statistika
+          {activeTab === 'statistika' && <span className="absolute left-0 right-0 -bottom-[2px] h-1 bg-indigo-600 rounded-full" />}
+        </button>
+      </div>
+      {/* Prikaz tabele ili statistike */}
+      {activeTab === 'tabela' ? (
+        <>
+          {/* Naslov tabele i kontrole */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+            <div className="flex items-center gap-2">
+              <Image src="/table.svg" alt="Tabela" width={28} height={28} />
+              <h2 className="text-3xl font-semibold">Tabela</h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              {selectedIds.length > 0 && (
+                <Button variant="destructive" onClick={async () => {
+                  const confirmed = window.confirm('Da li ste sigurni da želite da obrišete izabrane korisnike?');
+                  if (confirmed) {
+                    for (const id of selectedIds) {
+                      await handleDelete(id);
+                    }
+                    setSelectedIds([]);
+                  }
+                }} className="flex items-center gap-2 order-1 sm:order-none">
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect x="6" y="7" width="12" height="12" rx="2" stroke="#fff" strokeWidth="2"/><path d="M9 7V5a3 3 0 1 1 6 0v2" stroke="#fff" strokeWidth="2"/></svg>
+                  Obriši ({selectedIds.length})
+                </Button>
+              )}
+              <Button onClick={() => setModalOpen(true)} variant="default" className="font-semibold bg-[#3A3CA6] hover:bg-blue-700 active:bg-blue-800 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none order-2 sm:order-none">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                  <path stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5"/>
+                </svg>
+                Novi korisnik
               </Button>
-            )}
-            <Button onClick={() => setModalOpen(true)} variant="default" className="font-semibold bg-[#3A3CA6] hover:bg-blue-700 active:bg-blue-800 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none order-2 sm:order-none">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                <path stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5"/>
-              </svg>
-              Novi korisnik
-            </Button>
-            <Button variant="outline" onClick={() => setExportOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">Izvoz</Button>
-            <div className="relative">
-              <Button variant="outline" onClick={() => setColumnsOpen(!columnsOpen)} className="flex items-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <span className="w-5 h-5 inline-block align-middle">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <g id="columns-3-2" transform="translate(-2 -2)">
-                      <path id="secondary" fill="#2ca9bc" d="M4,3H20a1,1,0,0,1,1,1V7H3V4A1,1,0,0,1,4,3Z"/>
-                      <path id="primary" d="M15,7H9V21h6ZM3,7H21M20,21H4a1,1,0,0,1-1-1V4A1,1,0,0,1,4,3H20a1,1,0,0,1,1,1V20A1,1,0,0,1,20,21Z" fill="none" stroke="#000000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/>
-                    </g>
-                  </svg>
-                </span>
-                Kolone <span className="ml-1 bg-indigo-600 text-white rounded px-2">12</span>
-              </Button>
-              {columnsOpen && (
-                <ColumnsMenu 
-                  open={columnsOpen} 
-                  onClose={() => setColumnsOpen(false)} 
-                  selected={visibleColumns} 
-                  onChange={(cols, visible) => { setColumnOrder(cols); setVisibleColumns(visible); }}
+              <Button variant="outline" onClick={() => setExportOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">Izvoz</Button>
+              <div className="relative">
+                <Button variant="outline" onClick={() => setColumnsOpen(!columnsOpen)} className="flex items-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                  <span className="w-5 h-5 inline-block align-middle">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g id="columns-3-2" transform="translate(-2 -2)">
+                        <path id="secondary" fill="#2ca9bc" d="M4,3H20a1,1,0,0,1,1,1V7H3V4A1,1,0,0,1,4,3Z"/>
+                        <path id="primary" d="M15,7H9V21h6ZM3,7H21M20,21H4a1,1,0,0,1-1-1V4A1,1,0,0,1,4,3H20a1,1,0,0,1,1,1V20A1,1,0,0,1,20,21Z" fill="none" stroke="#000000" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"/>
+                      </g>
+                    </svg>
+                  </span>
+                  Kolone <span className="ml-1 bg-indigo-600 text-white rounded px-2">12</span>
+                </Button>
+                {columnsOpen && (
+                  <ColumnsMenu 
+                    open={columnsOpen} 
+                    onClose={() => setColumnsOpen(false)} 
+                    selected={visibleColumns} 
+                    onChange={(cols, visible) => { setColumnOrder(cols); setVisibleColumns(visible); }}
+                  />
+                )}
+              </div>
+              <Button variant="outline" onClick={() => setFilterOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:outline-none">Filteri</Button>
+              {filterOpen && (
+                <KorisniciFilter
+                  open={filterOpen}
+                  onClose={() => setFilterOpen(false)}
+                  onFilter={setFilterValues}
+                  // Ove vrednosti možeš popuniti iz baze ili hardkodirati
+                  uloge={[...new Set(korisnici.map(k => k.uloga).filter(Boolean))] as string[]}
+                  pozicije={[...new Set(korisnici.map(k => k.pozicija).filter(Boolean))] as string[]}
+                  sektori={[...new Set(korisnici.map(k => k.sektor).filter(Boolean))] as string[]}
+                  statusi={[...new Set(korisnici.map(k => k.status_zaposlenja).filter(Boolean))] as string[]}
+                  vrsteZaposlenja={[...new Set(korisnici.map(k => k.vrsta_zaposlenja).filter(Boolean))] as string[]}
+                  pristupi={[...new Set(korisnici.map(k => k.pristup).filter(Boolean))] as string[]}
+                  initialValues={filterValues}
                 />
               )}
             </div>
-            <Button variant="outline" onClick={() => setFilterOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:outline-none">Filteri</Button>
-            {filterOpen && (
-              <KorisniciFilter
-                open={filterOpen}
-                onClose={() => setFilterOpen(false)}
-                onFilter={setFilterValues}
-                // Ove vrednosti možeš popuniti iz baze ili hardkodirati
-                uloge={[...new Set(korisnici.map(k => k.uloga).filter(Boolean))] as string[]}
-                pozicije={[...new Set(korisnici.map(k => k.pozicija).filter(Boolean))] as string[]}
-                sektori={[...new Set(korisnici.map(k => k.sektor).filter(Boolean))] as string[]}
-                statusi={[...new Set(korisnici.map(k => k.status_zaposlenja).filter(Boolean))] as string[]}
-                vrsteZaposlenja={[...new Set(korisnici.map(k => k.vrsta_zaposlenja).filter(Boolean))] as string[]}
-                pristupi={[...new Set(korisnici.map(k => k.pristup).filter(Boolean))] as string[]}
-                initialValues={filterValues}
-              />
-            )}
           </div>
-        </div>
 
-        {/* Tabela */}
-        <div className="overflow-x-auto w-full">
-          <KorisniciTable
-            korisnici={paginatedKorisnici}
-            visibleColumns={visibleColumns}
-            columnOrder={columnOrder}
-            onToggleColumn={handleToggleColumn}
-            onOrderChange={setColumnOrder}
-            selectedIds={selectedIds}
-            onSelect={handleSelect}
-            onSelectAll={handleSelectAll}
-            allSelected={selectedIds.length === paginatedKorisnici.length && paginatedKorisnici.length > 0}
-            loading={loading}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onSortByName={handleSortByName}
-            onSortByNajskorijiPocetak={handleSortByNajskorijiPocetak}
-            onSortByNajskorijiZavrsetak={handleSortByNajskorijiZavrsetak}
-          />
-        </div>
+          {/* Tabela */}
+          <div className="overflow-x-auto w-full">
+            <KorisniciTable
+              korisnici={paginatedKorisnici}
+              visibleColumns={visibleColumns}
+              columnOrder={columnOrder}
+              onToggleColumn={handleToggleColumn}
+              onOrderChange={setColumnOrder}
+              selectedIds={selectedIds}
+              onSelect={handleSelect}
+              onSelectAll={handleSelectAll}
+              allSelected={selectedIds.length === paginatedKorisnici.length && paginatedKorisnici.length > 0}
+              loading={loading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onSortByName={handleSortByName}
+              onSortByNajskorijiPocetak={handleSortByNajskorijiPocetak}
+              onSortByNajskorijiZavrsetak={handleSortByNajskorijiZavrsetak}
+            />
+          </div>
 
-        {/* Pagination i ukupno stavki prikazujem samo ovde */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Broj redova:</span>
-            <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
-              value={rowsPerPage}
-              onChange={e => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
-            >
-              {[5, 10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
+          {/* Pagination i ukupno stavki prikazujem samo ovde */}
+          <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <span>Broj redova:</span>
+              <select
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
+                value={rowsPerPage}
+                onChange={e => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
+              >
+                {[5, 10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+            <div className="text-sm text-gray-600">
+              Ukupno stavki: <span className="font-medium">{korisnici.length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>Prethodna</button>
+              <button className="border border-blue-500 bg-blue-500 text-white rounded px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">{page}</button>
+              <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>Sledeća</button>
+            </div>
           </div>
-          <div className="text-sm text-gray-600">
-            Ukupno stavki: <span className="font-medium">{korisnici.length}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => setPage(p => Math.max(1, p-1))} disabled={page === 1}>Prethodna</button>
-            <button className="border border-blue-500 bg-blue-500 text-white rounded px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">{page}</button>
-            <button className="border border-gray-300 rounded px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>Sledeća</button>
-          </div>
-        </div>
-      </div>
+        </>
+      ) : (
+        <KorisniciStatistika korisnici={korisnici} />
+      )}
 
       <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} onExport={handleExport} defaultColumns={visibleColumns} />
       <NoviKorisnikModal open={modalOpen} onClose={() => setModalOpen(false)} onAdd={handleAdd} />

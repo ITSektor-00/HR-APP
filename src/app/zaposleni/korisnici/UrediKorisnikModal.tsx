@@ -182,41 +182,28 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
 
         {/* Tabovi raspoređeni levo, centar, desno, sa paddingom, bez border linije iznad */}
         <div className="relative">
-          <div className="flex justify-between mb-4 px-8 relative z-10">
+          <div className="flex justify-between mb-4 px-8 relative z-10 w-full">
             <button
-              className={`flex items-center gap-2 px-4 py-2 focus:outline-none font-semibold text-base transition-colors duration-150 ${activeTab === tabs[0].key ? 'text-blue-700' : 'text-gray-800'}`}
-              style={{ borderBottom: activeTab === tabs[0].key ? '2px solid #2563eb' : '2px solid transparent' }}
+              className={`flex items-center gap-2 px-4 py-2 focus:outline-none font-semibold text-base transition-colors duration-150 ${activeTab === tabs[0].key ? 'text-blue-700 border-b-2 border-blue-600' : 'text-gray-800 border-b-2 border-transparent'}`}
               onClick={() => setActiveTab(tabs[0].key)}
             >
               <Image src={tabs[0].icon} alt="" width={20} height={20} className="w-5 h-5" />
               <span className="text-lg">{tabs[0].label}</span>
             </button>
             <button
-              className={`flex items-center gap-2 px-4 py-2 focus:outline-none font-semibold text-base transition-colors duration-150 ${activeTab === tabs[1].key ? 'text-blue-700' : 'text-gray-800'}`}
-              style={{ borderBottom: activeTab === tabs[1].key ? '2px solid #2563eb' : '2px solid transparent' }}
+              className={`flex items-center gap-2 px-4 py-2 focus:outline-none font-semibold text-base transition-colors duration-150 ${activeTab === tabs[1].key ? 'text-blue-700 border-b-2 border-blue-600' : 'text-gray-800 border-b-2 border-transparent'}`}
               onClick={() => setActiveTab(tabs[1].key)}
             >
               <Image src={tabs[1].icon} alt="" width={20} height={20} className="w-5 h-5" />
               <span className="text-lg">{tabs[1].label}</span>
             </button>
             <button
-              className={`flex items-center gap-2 px-4 py-2 focus:outline-none font-semibold text-base transition-colors duration-150 ${activeTab === tabs[2].key ? 'text-blue-700' : 'text-gray-800'}`}
-              style={{ borderBottom: activeTab === tabs[2].key ? '2px solid #2563eb' : '2px solid transparent' }}
+              className={`flex items-center gap-2 px-4 py-2 focus:outline-none font-semibold text-base transition-colors duration-150 ${activeTab === tabs[2].key ? 'text-blue-700 border-b-2 border-blue-600' : 'text-gray-800 border-b-2 border-transparent'}`}
               onClick={() => setActiveTab(tabs[2].key)}
             >
               <Image src={tabs[2].icon} alt="" width={20} height={20} className="w-5 h-5" />
               <span className="text-lg">{tabs[2].label}</span>
             </button>
-          </div>
-          {/* Animirana gradient linija ispod aktivnog taba */}
-          <div className="absolute left-0 right-0 top-full h-1 flex items-center pointer-events-none">
-            <div
-              className="transition-all duration-300 h-1 bg-gradient-to-r from-transparent via-blue-600 to-transparent rounded-full"
-              style={{
-                width: activeTab === 'licni' ? '33%' : activeTab === 'zaposlenje' ? '33%' : '33%',
-                marginLeft: activeTab === 'licni' ? '0%' : activeTab === 'zaposlenje' ? '33%' : '66%'
-              }}
-            />
           </div>
         </div>
 
