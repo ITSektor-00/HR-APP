@@ -172,8 +172,10 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ pointerEvents: 'auto' }}>
+      {/* Backdrop koji blokira klikove na pozadinu */}
+      <div className="absolute inset-0 bg-black/50 z-40" style={{ pointerEvents: 'auto' }} onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden z-50">
         {/* Header bez border-b */}
         <div className="flex justify-between items-center p-6">
           <h2 className="text-2xl font-bold">Uredi korisnika</h2>

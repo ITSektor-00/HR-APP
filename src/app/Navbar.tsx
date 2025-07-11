@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import Image from "next/image"
 import Link from "next/link"
 import { useUser } from "./ThemeContext";
+// import SidebarControl from "./SidebarControl";
+// import { useSidebarMode } from "./ClientLayoutShell";
 
 type User = {
   id: number;
@@ -16,6 +18,18 @@ export default function Navbar() {
   const [profilOpen, setProfilOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const { user, loading } = useUser();
+  // const { mode, setMode } = useSidebarMode();
+
+  React.useEffect(() => {
+    if (modalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [modalOpen]);
 
   if (loading) return null;
 
@@ -204,9 +218,9 @@ function ProfileModal({ user, onClose }: { user: User | null, onClose: () => voi
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative animate-fade-in-up border border-gray-100">
-        <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl" onClick={onClose}>&times;</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 pointer-events-none">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative animate-fade-in-up border border-gray-100 z-50 pointer-events-auto">
+        <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl cursor-pointer" onClick={onClose}>&times;</button>
         <h2 className="text-2xl font-bold mb-4 text-gray-900">Uredi profil</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -1,9 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React from 'react'
 import DynamicIcon from './components/DynamicIcon'
+import SidebarControl from "./SidebarControl";
+import { useSidebarMode } from "./ClientLayoutShell";
 
 interface NavLink {
   href: string
@@ -73,47 +76,127 @@ const sections = [
 
 export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   const pathname = usePathname()
+  const { mode, setMode } = useSidebarMode();
+  const [popupOpen, setPopupOpen] = React.useState(false);
+  // const [hoveredItem, setHoveredItem] = React.useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = React.useState<{top: number, left: number, label: string} | null>(null);
+  const popupRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!popupOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setPopupOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [popupOpen]);
+
+  // Sakrij tooltip kad sidebar postane expanded
+  React.useEffect(() => {
+    if (sidebarOpen) setTooltipPos(null);
+  }, [sidebarOpen]);
+
+  // Tooltip prikaz
+  const showTooltip = (e: React.MouseEvent, label: string) => {
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setTooltipPos({
+      top: rect.top + rect.height / 2,
+      left: rect.right + 8,
+      label,
+    });
+  };
+  const hideTooltip = () => setTooltipPos(null);
 
   return (
-    <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'} overflow-x-hidden`}>
-      <div className="flex flex-col w-full">
-        <SidebarItem
-          href="/"
-          icon={<DynamicIcon iconName="komandnaTabla" alt="Komandna tabla" />}
-          label="Komandna tabla"
-          active={pathname === '/'}
-          sidebarOpen={sidebarOpen}
-        />
-      </div>
-      {sections.map((section, idx) => (
-        <div key={section.title} className="flex flex-col w-full mt-1.5">
-          {!sidebarOpen && idx !== 0 && (
-            <div className="w-7 h-0.5 bg-[var(--border-color)] mx-auto my-1 rounded-full opacity-70" />
-          )}
-          {sidebarOpen && (
-            <div className="text-[14px] text-[var(--text-secondary)] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
-              {section.title}
+    <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'}`} style={{ position: 'relative', height: '100%' }}>
+      <div className="flex flex-col w-full flex-1">
+        <div className="relative">
+          <SidebarItem
+            href="/"
+            icon={<DynamicIcon iconName="komandnaTabla" alt="Komandna tabla" />}
+            label="Komandna tabla"
+            active={pathname === '/'}
+            sidebarOpen={sidebarOpen}
+            onMouseEnter={e => !sidebarOpen && showTooltip(e, 'Komandna tabla')}
+            onMouseLeave={hideTooltip}
+          />
+        </div>
+        {sections.map((section, idx) => (
+          <div key={section.title} className="flex flex-col w-full mt-1.5">
+            {!sidebarOpen && idx !== 0 && (
+              <div className="w-7 h-0.5 bg-[var(--border-color)] mx-auto my-1 rounded-full opacity-70" />
+            )}
+            {sidebarOpen && (
+              <div className="text-[14px] text-[var(--text-secondary)] font-bold px-2 mb-0.5 mt-2 tracking-widest uppercase">
+                {section.title}
+              </div>
+            )}
+            <div className="flex flex-col gap-0.5 w-full">
+              {section.links.map((link) => (
+                <div key={link.href} className="relative">
+                  <SidebarItem
+                    href={link.href}
+                    icon={link.icon}
+                    label={link.label}
+                    active={pathname === link.href}
+                    sidebarOpen={sidebarOpen}
+                    onMouseEnter={e => !sidebarOpen && showTooltip(e, link.label)}
+                    onMouseLeave={hideTooltip}
+                  />
+                </div>
+              ))}
             </div>
-          )}
-          <div className="flex flex-col gap-0.5 w-full">
-            {section.links.map((link) => (
-              <SidebarItem
-                key={link.href}
-                href={link.href}
-                icon={link.icon}
-                label={link.label}
-                active={pathname === link.href}
-                sidebarOpen={sidebarOpen}
-              />
-            ))}
+          </div>
+        ))}
+        {/* Ikonica sidebar-control ostaje odmah ispod sekcija, popup je fiksiran u donjem levom uglu sidebar-a */}
+        <div className={`hidden lg:flex flex-col mt-6 mb-2 ${sidebarOpen ? 'w-full items-start pl-0' : 'w-12 justify-center items-center'}`}>
+          <div className="relative">
+            <img
+              src="/ikonice/sidebar-control.svg"
+              alt="Sidebar control"
+              className="w-5 h-5 cursor-pointer hover:bg-gray-100 rounded-xl p-0 transition-all"
+              onClick={() => setPopupOpen((o) => !o)}
+              style={{ userSelect: 'none' }}
+              onMouseEnter={e => !sidebarOpen && showTooltip(e, 'Sidebar control')}
+              onMouseLeave={hideTooltip}
+            />
           </div>
         </div>
-      ))}
+      </div>
+      {/* Popup je fiksiran u donjem levom uglu sidebar-a, nezavisan od ikonice */}
+      {popupOpen && (
+        <div
+          ref={popupRef}
+          className="flex flex-col items-stretch bg-white rounded-xl shadow-xl border border-gray-200 py-2 px-2 z-50"
+          style={{ position: 'fixed', left: sidebarOpen ? 40 : 56, bottom: 16, minWidth: 110 }}
+        >
+          <SidebarControl value={mode} onChange={(m) => { setMode(m); setPopupOpen(false); }} />
+        </div>
+      )}
+      {/* Tooltip fixed za collapsed */}
+      {!sidebarOpen && tooltipPos && (
+        <div
+          className="bg-gray-100 text-gray-900 px-3 py-1.5 rounded-xl shadow font-medium z-50 whitespace-nowrap pointer-events-none"
+          style={{ position: 'fixed', top: tooltipPos.top, left: tooltipPos.left, transform: 'translateY(-50%)' }}
+        >
+          {tooltipPos.label}
+        </div>
+      )}
     </nav>
   )
 }
 
-function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string, icon?: React.ReactElement, label: string, active: boolean, sidebarOpen: boolean }) {
+function SidebarItem({ href, icon, label, active, sidebarOpen, onMouseEnter, onMouseLeave }: { 
+  href: string, 
+  icon?: React.ReactElement, 
+  label: string, 
+  active: boolean, 
+  sidebarOpen: boolean,
+  onMouseEnter?: (e: React.MouseEvent) => void,
+  onMouseLeave?: () => void
+}) {
   if (!sidebarOpen) {
     return (
       <div className="relative flex items-center justify-center w-full">
@@ -125,6 +208,8 @@ function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string,
             hover:bg-[var(--border-color)] focus:outline-none
           `}
           tabIndex={0}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
         >
           <span className={`w-5 h-5 flex items-center justify-center ${active ? 'font-bold' : ''}`}>{icon}</span>
         </Link>
@@ -143,7 +228,10 @@ function SidebarItem({ href, icon, label, active, sidebarOpen }: { href: string,
         focus:outline-none
       `}
       title={label}
-      style={{fontSize: 13, minHeight: 32, maxWidth: sidebarOpen ? 220 : 48, overflow: 'hidden'}}>
+      style={{fontSize: 13, minHeight: 32, maxWidth: sidebarOpen ? 220 : 48, overflow: 'hidden'}}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       <span className={`w-4 h-4 flex items-center justify-center z-10 ${active ? 'font-bold' : ''}`}>{icon}</span>
       {sidebarOpen && (
         <span className={`truncate z-10 ${active ? 'font-bold' : 'font-normal'} hover:underline`} style={{maxWidth: 120, marginLeft: 8}}>{label}</span>

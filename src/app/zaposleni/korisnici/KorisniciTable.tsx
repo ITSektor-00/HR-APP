@@ -423,14 +423,14 @@ export default function KorisniciTable({
                         )}
                         {/* Resize handle ili dekorativna linija - uvek isto pozicionirana i iste visine */}
                         <div
-                          className="absolute top-1/2 -translate-y-1/2 right-0 h-[24px] w-2 flex items-center justify-center z-30"
+                          className="absolute top-1/2 -translate-y-1/2 right-0 h-6 w-3 flex items-center justify-center z-30"
                           style={{ pointerEvents: header.column.getCanResize && header.column.getCanResize() ? 'auto' : 'none' }}
                         >
                           <div
                             className={
-                              `h-full w-px rounded ${
+                              `h-full w-1 rounded-full ${
                                 (header.column.getCanResize && header.column.getCanResize())
-                                  ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-gray-300')
+                                  ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-gray-400')
                                   : 'bg-gray-200'
                               } transition-all`
                             }

@@ -1,9 +1,20 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, createContext, useContext } from 'react'
 import SidebarNav from './SidebarNav'
 import Navbar from './Navbar'
 import { useThemeContext } from './ThemeContext'
+
+// SidebarMode context
+export type SidebarMode = 'expanded' | 'collapsed' | 'hover';
+const SidebarModeContext = createContext<{
+  mode: SidebarMode;
+  setMode: (mode: SidebarMode) => void;
+}>({ mode: 'expanded', setMode: () => {} });
+
+export function useSidebarMode() {
+  return useContext(SidebarModeContext);
+}
 
 export default function ClientLayoutShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -11,6 +22,7 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const { theme, mounted } = useThemeContext()
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>('expanded');
 
   useEffect(() => {
     const checkAuth = () => {
@@ -107,9 +119,17 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
   }
 
   // Sidebar je otvoren ako je kliknuto ili ako je hoverovan dok je zatvoren
-  const isSidebarOpen = sidebarOpen || hovering
+  let isSidebarOpen = false;
+  if (sidebarMode === 'expanded') {
+    isSidebarOpen = true;
+  } else if (sidebarMode === 'collapsed') {
+    isSidebarOpen = false;
+  } else if (sidebarMode === 'hover') {
+    isSidebarOpen = hovering || sidebarOpen;
+  }
 
   return (
+    <SidebarModeContext.Provider value={{ mode: sidebarMode, setMode: setSidebarMode }}>
     <div key={theme} className="h-screen w-full flex flex-col bg-[var(--main-bg)] overflow-x-hidden transition-all duration-300">
       {/* Navbar skroz gore */}
       <Navbar />
@@ -119,8 +139,8 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
         <aside
           className={`group sticky top-0 h-[calc(100vh-48px)] bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 z-20 ${isSidebarOpen ? 'w-64' : 'w-12'} px-2 py-4 overflow-y-auto custom-scrollbar pr-3 overflow-x-hidden lg:block hidden sm:flex sm:relative ${sidebarOpen ? 'sm:fixed sm:left-0 sm:top-12' : ''}`}
           style={{ transitionProperty: 'width,background-color,border-color' }}
-          onMouseEnter={() => { if (!sidebarOpen && window.innerWidth >= 1024) setHovering(true) }}
-          onMouseLeave={() => { if (!sidebarOpen && window.innerWidth >= 1024) setHovering(false) }}
+            onMouseEnter={() => { if (sidebarMode === 'hover' && !sidebarOpen && window.innerWidth >= 1024) setHovering(true) }}
+            onMouseLeave={() => { if (sidebarMode === 'hover' && !sidebarOpen && window.innerWidth >= 1024) setHovering(false) }}
         >
           {/* Dugme za zatvaranje - prikazuje se samo kada je sidebar otvoren klikom */}
           {sidebarOpen && (
@@ -149,5 +169,6 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
         <main className="flex-1 p-4 sm:p-6 bg-[var(--main-bg)] min-h-0 transition-all duration-300 overflow-x-hidden w-full">{children}</main>
       </div>
     </div>
+    </SidebarModeContext.Provider>
   )
 } 
