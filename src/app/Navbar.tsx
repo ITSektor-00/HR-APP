@@ -2,8 +2,13 @@ import React, { useState } from 'react'
 import Image from "next/image"
 import Link from "next/link"
 import { useUser } from "./ThemeContext";
+<<<<<<< HEAD
 import SidebarControl from "./SidebarControl";
 import { useSidebarMode } from "./ClientLayoutShell";
+=======
+// import SidebarControl from "./SidebarControl";
+// import { useSidebarMode } from "./ClientLayoutShell";
+>>>>>>> luka
 
 type User = {
   id: number;
@@ -18,7 +23,11 @@ export default function Navbar() {
   const [profilOpen, setProfilOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const { user, loading } = useUser();
+<<<<<<< HEAD
   const { mode, setMode } = useSidebarMode();
+=======
+  // const { mode, setMode } = useSidebarMode();
+>>>>>>> luka
 
   React.useEffect(() => {
     if (modalOpen) {

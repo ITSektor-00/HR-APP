@@ -430,15 +430,27 @@ export default function KorisniciTable({
                         )}
                         {/* Resize handle ili dekorativna linija - uvek isto pozicionirana i iste visine */}
                         <div
+<<<<<<< HEAD
                           className="absolute top-1/2 -translate-y-1/2 right-0 h-[32px] w-5 flex items-center justify-center z-50"
+=======
+                          className="absolute top-1/2 -translate-y-1/2 right-0 h-6 w-3 flex items-center justify-center z-30"
+>>>>>>> luka
                           style={{ pointerEvents: header.column.getCanResize && header.column.getCanResize() ? 'auto' : 'none' }}
                         >
                           <div
                             className={
+<<<<<<< HEAD
                               `h-full w-1 rounded transition-all duration-100 ` +
                               ((header.column.getCanResize && header.column.getCanResize())
                                 ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-blue-400')
                                 : 'bg-gray-300')
+=======
+                              `h-full w-1 rounded-full ${
+                                (header.column.getCanResize && header.column.getCanResize())
+                                  ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-gray-400')
+                                  : 'bg-gray-200'
+                              } transition-all`
+>>>>>>> luka
                             }
                             style={{ cursor: header.column.getCanResize && header.column.getCanResize() ? 'col-resize' : 'default' }}
                             onMouseDown={header.column.getCanResize && header.column.getCanResize() && header.getResizeHandler ? header.getResizeHandler() : undefined}
