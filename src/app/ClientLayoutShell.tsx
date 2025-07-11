@@ -130,7 +130,6 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
 
   return (
     <SidebarModeContext.Provider value={{ mode: sidebarMode, setMode: setSidebarMode }}>
-<<<<<<< HEAD
       <div key={theme} className="h-screen w-full flex flex-col bg-[var(--main-bg)] overflow-x-hidden transition-all duration-300">
         {/* Navbar skroz gore */}
         <Navbar />
@@ -160,21 +159,6 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
             </div>
           </aside>
           {/* Overlay za mobilne uređaje */}
-=======
-    <div key={theme} className="h-screen w-full flex flex-col bg-[var(--main-bg)] overflow-x-hidden transition-all duration-300">
-      {/* Navbar skroz gore */}
-      <Navbar />
-      {/* Flex kontejner za sidebar i main content */}
-      <div className="flex flex-1 min-h-0 overflow-x-hidden">
-        {/* Sidebar */}
-        <aside
-          className={`group sticky top-0 h-[calc(100vh-48px)] bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 z-20 ${isSidebarOpen ? 'w-64' : 'w-12'} px-2 py-4 overflow-y-auto custom-scrollbar pr-3 overflow-x-hidden lg:block hidden sm:flex sm:relative ${sidebarOpen ? 'sm:fixed sm:left-0 sm:top-12' : ''}`}
-          style={{ transitionProperty: 'width,background-color,border-color' }}
-            onMouseEnter={() => { if (sidebarMode === 'hover' && !sidebarOpen && window.innerWidth >= 1024) setHovering(true) }}
-            onMouseLeave={() => { if (sidebarMode === 'hover' && !sidebarOpen && window.innerWidth >= 1024) setHovering(false) }}
-        >
-          {/* Dugme za zatvaranje - prikazuje se samo kada je sidebar otvoren klikom */}
->>>>>>> luka
           {sidebarOpen && (
             <div 
               className="fixed inset-0 bg-black bg-opacity-50 z-10 lg:hidden"
@@ -185,10 +169,6 @@ export default function ClientLayoutShell({ children }: { children: React.ReactN
           <main className="flex-1 p-4 sm:p-6 bg-[var(--main-bg)] min-h-0 transition-all duration-300 overflow-x-hidden w-full">{children}</main>
         </div>
       </div>
-<<<<<<< HEAD
-=======
-    </div>
->>>>>>> luka
     </SidebarModeContext.Provider>
   )
 } 

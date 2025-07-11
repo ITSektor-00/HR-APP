@@ -78,11 +78,7 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
   const pathname = usePathname()
   const { mode, setMode } = useSidebarMode();
   const [popupOpen, setPopupOpen] = React.useState(false);
-<<<<<<< HEAD
-=======
-  // const [hoveredItem, setHoveredItem] = React.useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = React.useState<{top: number, left: number, label: string} | null>(null);
->>>>>>> luka
   const popupRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -95,19 +91,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [popupOpen]);
-<<<<<<< HEAD
-
-  return (
-    <nav className={`flex flex-col items-center ${sidebarOpen ? 'py-1 gap-0.5 h-full w-full' : 'py-1 gap-0 h-full w-12'} overflow-x-hidden`} style={{ position: 'relative', height: '100%' }}>
-      <div className="flex flex-col w-full flex-1">
-        <SidebarItem
-          href="/"
-          icon={<DynamicIcon iconName="komandnaTabla" alt="Komandna tabla" />}
-          label="Komandna tabla"
-          active={pathname === '/'}
-          sidebarOpen={sidebarOpen}
-        />
-=======
 
   // Sakrij tooltip kad sidebar postane expanded
   React.useEffect(() => {
@@ -139,7 +122,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
             onMouseLeave={hideTooltip}
           />
         </div>
->>>>>>> luka
         {sections.map((section, idx) => (
           <div key={section.title} className="flex flex-col w-full mt-1.5">
             {!sidebarOpen && idx !== 0 && (
@@ -152,18 +134,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
             )}
             <div className="flex flex-col gap-0.5 w-full">
               {section.links.map((link) => (
-<<<<<<< HEAD
-                <SidebarItem
-                  key={link.href}
-                  href={link.href}
-                  icon={link.icon}
-                  label={link.label}
-                  active={pathname === link.href}
-                  sidebarOpen={sidebarOpen}
-                />
-              ))}
-            </div>
-=======
                 <div key={link.href} className="relative">
                   <SidebarItem
                     href={link.href}
@@ -177,21 +147,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
                 </div>
               ))}
             </div>
-          </div>
-        ))}
-        {/* Ikonica sidebar-control ostaje odmah ispod sekcija, popup je fiksiran u donjem levom uglu sidebar-a */}
-        <div className={`hidden lg:flex flex-col mt-6 mb-2 ${sidebarOpen ? 'w-full items-start pl-0' : 'w-12 justify-center items-center'}`}>
-          <div className="relative">
-            <img
-              src="/ikonice/sidebar-control.svg"
-              alt="Sidebar control"
-              className="w-5 h-5 cursor-pointer hover:bg-gray-100 rounded-xl p-0 transition-all"
-              onClick={() => setPopupOpen((o) => !o)}
-              style={{ userSelect: 'none' }}
-              onMouseEnter={e => !sidebarOpen && showTooltip(e, 'Sidebar control')}
-              onMouseLeave={hideTooltip}
-            />
->>>>>>> luka
           </div>
         ))}
         {/* Ikonica sidebar-control ostaje odmah ispod sekcija, popup je fiksiran u donjem levom uglu sidebar-a */}
@@ -215,8 +170,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
           <SidebarControl value={mode} onChange={(m) => { setMode(m); setPopupOpen(false); }} />
         </div>
       )}
-<<<<<<< HEAD
-=======
       {/* Tooltip fixed za collapsed */}
       {!sidebarOpen && tooltipPos && (
         <div
@@ -226,7 +179,6 @@ export default function SidebarNav({ sidebarOpen }: { sidebarOpen: boolean }) {
           {tooltipPos.label}
         </div>
       )}
->>>>>>> luka
     </nav>
   )
 }

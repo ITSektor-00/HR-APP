@@ -406,7 +406,7 @@ export default function KorisniciTable({
                                         }}
                                       >
                                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]"><path d="M12 4v16m0 0l-4-4m4 4l4-4" stroke="#5B2EFF" strokeWidth="2"/></svg>
-                                        Sortiraj od najskorijeg početka zaposlenja
+                                        Najskoriji početak
                                       </button>
                                     )}
                                     {header.id === 'datum_zavrsetka' && (
@@ -419,7 +419,7 @@ export default function KorisniciTable({
                                         }}
                                       >
                                         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]"><path d="M12 4v16m0 0l-4-4m4 4l4-4" stroke="#5B2EFF" strokeWidth="2"/></svg>
-                                        Sortiraj od najskorijeg završetka zaposlenja
+                                        Najskoriji završetak
                                       </button>
                                     )}
                                   </>
@@ -430,27 +430,15 @@ export default function KorisniciTable({
                         )}
                         {/* Resize handle ili dekorativna linija - uvek isto pozicionirana i iste visine */}
                         <div
-<<<<<<< HEAD
-                          className="absolute top-1/2 -translate-y-1/2 right-0 h-[32px] w-5 flex items-center justify-center z-50"
-=======
                           className="absolute top-1/2 -translate-y-1/2 right-0 h-6 w-3 flex items-center justify-center z-30"
->>>>>>> luka
                           style={{ pointerEvents: header.column.getCanResize && header.column.getCanResize() ? 'auto' : 'none' }}
                         >
                           <div
                             className={
-<<<<<<< HEAD
                               `h-full w-1 rounded transition-all duration-100 ` +
                               ((header.column.getCanResize && header.column.getCanResize())
-                                ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-blue-400')
-                                : 'bg-gray-300')
-=======
-                              `h-full w-1 rounded-full ${
-                                (header.column.getCanResize && header.column.getCanResize())
-                                  ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-gray-400')
-                                  : 'bg-gray-200'
-                              } transition-all`
->>>>>>> luka
+                                ? (hoveredCol === header.id ? 'bg-blue-500' : 'bg-gray-400')
+                                : 'bg-gray-200')
                             }
                             style={{ cursor: header.column.getCanResize && header.column.getCanResize() ? 'col-resize' : 'default' }}
                             onMouseDown={header.column.getCanResize && header.column.getCanResize() && header.getResizeHandler ? header.getResizeHandler() : undefined}
