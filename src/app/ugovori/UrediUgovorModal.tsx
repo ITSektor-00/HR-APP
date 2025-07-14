@@ -5,25 +5,13 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import '../zaposleni/korisnici/NoviKorisnikModal.css';
 import Select from 'react-select';
-
-interface UgovorData {
-  broj_ugovora: string;
-  korisnik_id: string;
-  korisnik_ime: string;
-  korisnik_prezime: string;
-  datum_pocetka: string;
-  datum_zavrsetka: string;
-  tip_ugovora: string;
-  status: string;
-  napomena: string;
-  [key: string]: string | undefined;
-}
+import type { Ugovor } from "./page";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSave: (data: UgovorData) => void;
-  ugovor: UgovorData;
+  onSave: (data: Ugovor) => void;
+  ugovor: Ugovor;
 }
 
 const tabs = [
@@ -79,7 +67,7 @@ const UrediUgovorModal: React.FC<Props> = ({ open, onClose, onSave, ugovor }) =>
     datum_pocetka: '', datum_zavrsetka: '', uloga: '', pristup: '', sifra: ''
   }), []);
   
-  const [form, setForm] = useState<UgovorData>({} as UgovorData);
+  const [form, setForm] = useState<Ugovor>({} as Ugovor);
 
 
   useEffect(() => {
@@ -126,7 +114,7 @@ const UrediUgovorModal: React.FC<Props> = ({ open, onClose, onSave, ugovor }) =>
     const newErrors: Record<string, string> = { ...initialErrors };
 
     requiredFields.forEach(field => {
-      if (!form[field] || form[field] === '') {
+      if (!form[field as keyof Ugovor] || form[field as keyof Ugovor] === '') {
         newErrors[field] = 'Ovo polje je obavezno';
       }
     });

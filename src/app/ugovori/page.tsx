@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from 'next/image';
@@ -10,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import UgovoriFilter from './UgovoriFilter';
 import UgovoriStatistika from './UgovoriStatistika';
 
-interface Ugovor {
+export interface Ugovor {
   id: number;
   zaposleni: {
     ime: string;

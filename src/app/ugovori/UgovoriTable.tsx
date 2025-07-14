@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState, useMemo, useRef } from "react";
 import {
@@ -14,28 +16,9 @@ import EditStavkaModal from './EditStavkaModal';
 import DeleteStavkaConfirm from './DeleteStavkaConfirm';
 import ReactDOM from 'react-dom';
 import ResizeHandle from './ResizeHandle';
+import type { Ugovor } from "./page";
 
-// 1. Interfejs Ugovor - koristi zaposleni kao objekat
-interface Ugovor {
-  id: number;
-  zaposleni: {
-    ime: string;
-    prezime: string;
-    fotografija?: string;
-  };
-  vrsta_ugovora: string;
-  broj_ugovora: string;
-  dokument: string;
-  status: string;
-  uslovi: string;
-  napomena: string;
-  datum_pocetka: string;
-  datum_zavrsetka: string;
-  datum_kreiranja: string;
-  datum_azuriranja: string;
-  [key: string]: any;
-}
-
+// Ukloni lokalni interfejs Ugovor i importuj iz page.tsx
 interface UgovoriTableProps {
   ugovori: Ugovor[];
   visibleColumns: string[];
@@ -545,6 +528,8 @@ export default function UgovoriTable({
                                     datum_azuriranja: row.original.datum_azuriranja || '',
                                     dokument: row.original.dokument || '',
                                     uslovi: row.original.uslovi || '',
+                                    naziv_ugovora: row.original.naziv_ugovora || '',
+                                    opis: row.original.opis || '',
                                   };
                                   setEditModal({ row, column, value: '', ugovor });
                                 } else {
@@ -688,33 +673,14 @@ export default function UgovoriTable({
         <UrediUgovorModal
           open={!!editModal}
           onClose={() => setEditModal(null)}
-          ugovor={{
-            broj_ugovora: editModal.ugovor.broj_ugovora || '',
-            korisnik_id: String(editModal.ugovor.zaposleni_id || ''),
-            korisnik_ime: editModal.ugovor.zaposleni?.ime || '',
-            korisnik_prezime: editModal.ugovor.zaposleni?.prezime || '',
-            datum_pocetka: editModal.ugovor.datum_pocetka || '',
-            datum_zavrsetka: editModal.ugovor.datum_zavrsetka || '',
-            tip_ugovora: editModal.ugovor.vrsta_ugovora || '',
-            status: editModal.ugovor.status || '',
-            napomena: editModal.ugovor.napomena || '',
-            datum_kreiranja: editModal.ugovor.datum_kreiranja || '',
-            datum_azuriranja: editModal.ugovor.datum_azuriranja || '',
-            dokument: editModal.ugovor.dokument || '',
-            uslovi: editModal.ugovor.uslovi || '',
-          }}
+          ugovor={editModal.ugovor}
           onSave={async (data) => {
             // Sačuvaj izmenu ugovora u backendu
             if (editModal && editModal.ugovor) {
               await fetch(`/api/ugovori?id=${editModal.ugovor.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  ...data,
-                  zaposleni_id: data.zaposleni_id,
-                  zaposleni_ime: data.zaposleni_ime,
-                  zaposleni_prezime: data.zaposleni_prezime,
-                })
+                body: JSON.stringify(data)
               });
             }
             setEditModal(null);
