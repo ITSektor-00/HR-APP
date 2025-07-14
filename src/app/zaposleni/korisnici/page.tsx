@@ -435,6 +435,8 @@ export default function KorisniciPage() {
               onSortByName={handleSortByName}
               onSortByNajskorijiPocetak={handleSortByNajskorijiPocetak}
               onSortByNajskorijiZavrsetak={handleSortByNajskorijiZavrsetak}
+              columnsOpen={columnsOpen}
+              filterOpen={filterOpen}
             />
           </div>
 

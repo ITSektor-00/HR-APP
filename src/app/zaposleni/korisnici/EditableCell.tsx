@@ -33,8 +33,8 @@ const EditableCell: React.FC<EditableCellProps> = ({ value, column, row, onEdit 
   // Helper za pol
   const polLabel = (pol?: string) => {
     if (!pol) return '--';
-    if (pol.toLowerCase() === 'm') return 'Muški';
-    if (pol.toLowerCase() === 'ž') return 'Ženski';
+    if (pol.toLowerCase() === 'm') return 'M';
+    if (pol.toLowerCase() === 'z') return 'Z';
     return pol;
   };
 

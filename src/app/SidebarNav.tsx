@@ -25,16 +25,16 @@ const sections = [
     ] as NavLink[],
   },
   {
-    title: 'KORISNICI',
+    title: 'Korisnici',
     links: [
-      { href: '/zaposleni/korisnici', label: 'Korisnici', icon: <DynamicIcon iconName="korisnici" alt="Korisnici" /> },
+      { href: '/zaposleni/korisnici', label: 'Zaposleni', icon: <DynamicIcon iconName="korisnici" alt="Zaposleni" /> },
       { href: '/korisnici/beleske', label: 'Beleške', icon: <DynamicIcon iconName="beleske" alt="Beleške" /> },
     ] as NavLink[],
   },
   {
     title: 'KANCELARIJA',
     links: [
-      { href: '/korisnici/ugovori', label: 'Ugovori', icon: <DynamicIcon iconName="ugovori" alt="Ugovori" /> },
+      { href: '/ugovori', label: 'Ugovori', icon: <DynamicIcon iconName="ugovori" alt="Ugovori" /> },
       { href: '/korisnici/dokumenti', label: 'Dokumenti', icon: <DynamicIcon iconName="dokumenti" alt="Dokumenti" /> },
     ] as NavLink[],
   },

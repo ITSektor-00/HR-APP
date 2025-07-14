@@ -19,8 +19,8 @@ interface KorisnikEditPopupProps {
 }
 
 const polOptions = [
-  { value: 'Muški', label: 'Muški' },
-  { value: 'Ženski', label: 'Ženski' },
+  { value: 'M', label: 'M' },
+  { value: 'Z', label: 'Z' },
 ];
 
 const KorisnikEditPopup: React.FC<KorisnikEditPopupProps> = ({ open, onClose, korisnik, onSave }) => {

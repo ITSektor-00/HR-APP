@@ -8,46 +8,36 @@ import {
 } from "@tanstack/react-table";
 import Image from 'next/image';
 import { format } from 'date-fns';
-import UrediKorisnikModal from './UrediKorisnikModal';
+import UrediUgovorModal from './UrediUgovorModal';
 import EditableCell from './EditableCell';
 import EditStavkaModal from './EditStavkaModal';
 import DeleteStavkaConfirm from './DeleteStavkaConfirm';
 import ReactDOM from 'react-dom';
 import ResizeHandle from './ResizeHandle';
 
-interface Korisnik {
+// 1. Interfejs Ugovor - koristi zaposleni kao objekat
+interface Ugovor {
   id: number;
-  ime: string;
-  prezime: string;
-  pol?: string;
-  jmbg?: string;
-  adresa?: string;
-  mesto?: string;
-  grad?: string;
-  fotografija?: string;
-  email?: string;
-  telefon?: string;
-  pozicija?: string;
-  sektor?: string;
-  status_zaposlenja?: string;
-  vrsta_zaposlenja?: string;
-  broj_radne_dozvole?: string;
-  datum_pocetka?: string;
-  datum_zavrsetka?: string;
-  datum_kreiranja?: string;
-  datum_azuriranja?: string;
-  uloga?: string;
-  pristup?: string;
-  sifra?: string;
-  plata?: string;
-  period_plate?: string;
-  valuta?: string;
-  datum_rodjenja?: string;
-  [key: string]: string | number | undefined;
+  zaposleni: {
+    ime: string;
+    prezime: string;
+    fotografija?: string;
+  };
+  vrsta_ugovora: string;
+  broj_ugovora: string;
+  dokument: string;
+  status: string;
+  uslovi: string;
+  napomena: string;
+  datum_pocetka: string;
+  datum_zavrsetka: string;
+  datum_kreiranja: string;
+  datum_azuriranja: string;
+  [key: string]: any;
 }
 
-interface KorisniciTableProps {
-  korisnici: Korisnik[];
+interface UgovoriTableProps {
+  ugovori: Ugovor[];
   visibleColumns: string[];
   columnOrder: string[];
   onToggleColumn: (column: string) => void;
@@ -57,7 +47,7 @@ interface KorisniciTableProps {
   onSelectAll?: (checked: boolean) => void;
   allSelected?: boolean;
   loading?: boolean;
-  onEdit?: (korisnik: Korisnik) => void;
+  onEdit?: (ugovor: Ugovor) => void;
   onDelete?: (id: number) => void;
   onSortByName?: () => void;
   onSortByNajskorijiPocetak?: () => void;
@@ -97,29 +87,25 @@ function formatDatumBezVremena(datum?: string) {
   }
 }
 
-const columnLabels: Record<string, string> = {
+const COLUMN_LABELS: Record<string, string> = {
+  broj_ugovora: 'Broj ugovora',
   korisnik: 'Korisnik',
-  uloga: 'Uloga',
-  pristup: 'Pristup',
-  broj_radne_dozvole: 'Broj radne dozvole',
-  pozicija: 'Pozicija',
-  status_zaposlenja: 'Status zaposlenja',
-  vrsta_zaposlenja: 'Vrsta zaposlenja',
-  sektor: 'Sektor',
-  datum_pocetka: 'Datum početka zaposlenja',
-  datum_zavrsetka: 'Datum završetka zaposlenja',
+  tip_ugovora: 'Tip ugovora',
+  status: 'Status',
+  datum_pocetka: 'Datum početka',
+  datum_zavrsetka: 'Datum završetka',
+  napomena: 'Napomena',
   datum_kreiranja: 'Datum kreiranja',
   datum_azuriranja: 'Datum ažuriranja',
 };
 
 const DEFAULT_COLUMNS = [
-  "korisnik", "uloga", "pristup", "broj_radne_dozvole", "pozicija",
-  "status_zaposlenja", "vrsta_zaposlenja", "sektor",
-  "datum_pocetka", "datum_zavrsetka", "datum_kreiranja", "datum_azuriranja"
+  "broj_ugovora", "korisnik", "tip_ugovora", "status",
+  "datum_pocetka", "datum_zavrsetka", "napomena", "datum_kreiranja", "datum_azuriranja"
 ];
 
-export default function KorisniciTable({
-  korisnici,
+export default function UgovoriTable({
+  ugovori,
   visibleColumns,
   columnOrder,
   onToggleColumn,
@@ -136,7 +122,7 @@ export default function KorisniciTable({
   onSortByNajskorijiZavrsetak,
   columnsOpen = false, // NOVO
   filterOpen = false,  // NOVO
-}: KorisniciTableProps & { columnsOpen?: boolean, filterOpen?: boolean }) {
+}: UgovoriTableProps & { columnsOpen?: boolean, filterOpen?: boolean }) {
   const [sorting, setSorting] = useState<Array<{id: string, desc: boolean}>>([]);
   const [menuOpenRow, setMenuOpenRow] = useState<number | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
@@ -145,7 +131,7 @@ export default function KorisniciTable({
   const [openHeaderMenu, setOpenHeaderMenu] = useState<string | null>(null);
   const [headerMenuHover, setHeaderMenuHover] = useState<string | null>(null);
   const headerMenuTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [editModal, setEditModal] = useState<{row: unknown, column: unknown, value: string, korisnik?: Korisnik} | null>(null);
+  const [editModal, setEditModal] = useState<{row: unknown, column: unknown, value: string, ugovor?: Ugovor} | null>(null);
   const [deleteModal, setDeleteModal] = useState<{row: unknown, column: unknown, value: string} | null>(null);
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
 
@@ -185,6 +171,7 @@ export default function KorisniciTable({
   visibleColumns = (visibleColumns && visibleColumns.length > 0) ? visibleColumns : DEFAULT_COLUMNS;
   columnOrder = (columnOrder && columnOrder.length > 0) ? columnOrder : DEFAULT_COLUMNS;
 
+  // U columns definiciji koristi camelCase ključeve i COLUMN_LABELS za header
   const columns = useMemo(() => [
     ...(columnOrder ?? []).map((key) => ({
       accessorKey: key,
@@ -193,15 +180,15 @@ export default function KorisniciTable({
       size: 160,
       minSize: 80,
       maxSize: 400,
-      cell: (info: {row: {original: Korisnik}}) => {
-        const k = info.row.original;
+      cell: (info: {row: {original: Ugovor}}) => {
+        const u = info.row.original;
         switch (key) {
-          case 'korisnik':
+          case 'zaposleni':
             return (
               <span className="flex items-center gap-2">
-                {k.fotografija && !k.fotografija.includes('default-user.jpg') && k.fotografija.trim() !== '' ? (
+                {u.zaposleni?.fotografija && !u.zaposleni.fotografija.includes('default-user.jpg') && u.zaposleni.fotografija.trim() !== '' ? (
                   <Image
-                    src={k.fotografija}
+                    src={u.zaposleni.fotografija}
                     alt="avatar"
                     className="w-6 h-6 rounded-full object-cover"
                     width={24}
@@ -209,45 +196,30 @@ export default function KorisniciTable({
                   />
                 ) : (
                   <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-indigo-400">
-                    {(k.ime?.[0] || '').toUpperCase() + (k.prezime?.[0] || '').toUpperCase()}
+                    {(u.zaposleni?.ime?.[0] || '').toUpperCase() + (u.zaposleni?.prezime?.[0] || '').toUpperCase()}
                   </span>
                 )}
-                <span className="whitespace-nowrap">{`${k.ime || ''} ${k.prezime || ''}`.trim()}</span>
+                <span className="whitespace-nowrap">{`${u.zaposleni?.ime || ''} ${u.zaposleni?.prezime || ''}`.trim()}</span>
               </span>
             );
-          case 'uloga':
-            return k.uloga;
-          case 'pristup':
-            return k.pristup;
-          case 'broj_radne_dozvole':
-            return k.broj_radne_dozvole;
-          case 'pozicija':
-            return k.pozicija;
-          case 'status_zaposlenja':
-            return k.status_zaposlenja;
-          case 'vrsta_zaposlenja':
-            return k.vrsta_zaposlenja;
-          case 'sektor':
-            const sektorObj = SEKTORI.find(s => s.label === k.sektor);
-            return <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full" style={{backgroundColor: sektorObj?.color || '#d1d5db'}}></span>{k.sektor}</span>;
           case 'datum_pocetka':
-            return formatDatumBezVremena(k.datum_pocetka);
+            return formatDatumBezVremena(u.datum_pocetka);
           case 'datum_zavrsetka':
-            return formatDatumBezVremena(k.datum_zavrsetka);
+            return formatDatumBezVremena(u.datum_zavrsetka);
           case 'datum_kreiranja':
-            return formatDatum(k.datum_kreiranja);
+            return formatDatum(u.datum_kreiranja);
           case 'datum_azuriranja':
-            return formatDatum(k.datum_azuriranja);
+            return formatDatum(u.datum_azuriranja);
           default:
-            return k[key as keyof Korisnik] as string;
+            return u[key];
         }
       },
-      header: key === 'datum_pocetka' ? 'Datum početka zaposlenja' : key === 'datum_zavrsetka' ? 'Datum završetka zaposlenja' : (columnLabels[key] || key),
+      header: COLUMN_LABELS[key] || key,
     })),
   ], [columnOrder]);
 
   const table = useReactTable({
-    data: korisnici,
+    data: ugovori,
     columns,
     state: {
       sorting,
@@ -456,7 +428,7 @@ export default function KorisniciTable({
                                       </svg>
                                       Sakrij kolonu
                                     </button>
-                                    {header.id === 'datum_pocetka' && (
+                                    {header.id === 'Datum početka' && (
                                       <button
                                         className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
                                         onClick={() => {
@@ -469,7 +441,7 @@ export default function KorisniciTable({
                                         Najskoriji početak
                                       </button>
                                     )}
-                                    {header.id === 'datum_zavrsetka' && (
+                                    {header.id === 'Datum završetka' && (
                                       <button
                                         className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left text-[#5B2EFF] font-bold"
                                         onClick={() => {
@@ -518,8 +490,8 @@ export default function KorisniciTable({
                       <svg className="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
-                      <p className="font-medium">Nema korisnika</p>
-                      <p className="text-sm">Dodajte prvog korisnika da počnete</p>
+                      <p className="font-medium">Nema ugovora</p>
+                      <p className="text-sm">Dodajte prvog ugovora da počnete</p>
                     </div>
                   </td>
                 </tr>
@@ -554,36 +526,27 @@ export default function KorisniciTable({
                               column={cell.column}
                               row={row}
                               onEdit={(row, column) => {
-                                if (column.id === 'korisnik') {
+                                if (column.id === 'Zaposleni') {
                                   // Pripremi kompletan objekat za modal
-                                  const korisnik = {
+                                  const ugovor = {
                                     id: row.original.id,
-                                    ime: row.original.ime || '',
-                                    prezime: row.original.prezime || '',
-                                    pol: row.original.pol || '',
-                                    datum_rodjenja: row.original.datum_rodjenja || '',
-                                    jmbg: row.original.jmbg || '',
-                                    adresa: row.original.adresa || '',
-                                    mesto: row.original.mesto || '',
-                                    grad: row.original.grad || '',
-                                    fotografija: row.original.fotografija || '',
-                                    email: row.original.email || '',
-                                    telefon: row.original.telefon || '',
-                                    pozicija: row.original.pozicija || '',
-                                    sektor: row.original.sektor || '',
-                                    status_zaposlenja: row.original.status_zaposlenja || '',
-                                    vrsta_zaposlenja: row.original.vrsta_zaposlenja || '',
-                                    broj_radne_dozvole: row.original.broj_radne_dozvole || '',
+                                    broj_ugovora: row.original.broj_ugovora || '',
+                                    zaposleni: {
+                                      ime: row.original.zaposleni?.ime || '',
+                                      prezime: row.original.zaposleni?.prezime || '',
+                                      fotografija: row.original.zaposleni?.fotografija || '',
+                                    },
                                     datum_pocetka: row.original.datum_pocetka || '',
                                     datum_zavrsetka: row.original.datum_zavrsetka || '',
-                                    uloga: row.original.uloga || '',
-                                    pristup: row.original.pristup || '',
-                                    sifra: row.original.sifra || '',
-                                    plata: row.original.plata || '',
-                                    period_plate: row.original.period_plate || '',
-                                    valuta: row.original.valuta || '',
+                                    vrsta_ugovora: row.original.vrsta_ugovora || '',
+                                    status: row.original.status || '',
+                                    napomena: row.original.napomena || '',
+                                    datum_kreiranja: row.original.datum_kreiranja || '',
+                                    datum_azuriranja: row.original.datum_azuriranja || '',
+                                    dokument: row.original.dokument || '',
+                                    uslovi: row.original.uslovi || '',
                                   };
-                                  setEditModal({ row, column, value: '', korisnik });
+                                  setEditModal({ row, column, value: '', ugovor });
                                 } else {
                                   setEditModal({ row, column, value: row.original[column.id] || '' });
                                 }
@@ -602,7 +565,7 @@ export default function KorisniciTable({
                         <button
                           className="p-1 rounded hover:bg-gray-100 focus:outline-none transition-colors"
                           title="Detalji"
-                          onClick={() => window.location.href = `/zaposleni/korisnici/${row.original.id}`}
+                          onClick={() => window.location.href = `/ugovori/${row.original.id}`}
                         >
                           <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
                             <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="#888" strokeWidth="2"/>
@@ -686,7 +649,7 @@ export default function KorisniciTable({
                               <button 
                                 className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-left transition-colors text-red-600"
                                 onClick={() => {
-                                  if (confirm('Da li ste sigurni da želite da obrišete ovog korisnika?')) {
+                                  if (confirm('Da li ste sigurni da želite da obrišete ovog ugovora?')) {
                                     onDelete(row.original.id);
                                   }
                                   setMenuOpenRow(null);
@@ -721,43 +684,37 @@ export default function KorisniciTable({
         />
       )}
       {/* Modal za uređivanje stavke */}
-      {editModal && editModal.korisnik && (
-        <UrediKorisnikModal
+      {editModal && editModal.ugovor && (
+        <UrediUgovorModal
           open={!!editModal}
           onClose={() => setEditModal(null)}
-          korisnik={{
-            ime: editModal.korisnik.ime || '',
-            prezime: editModal.korisnik.prezime || '',
-            pol: editModal.korisnik.pol || '',
-            datum_rodjenja: editModal.korisnik.datum_rodjenja || '',
-            jmbg: editModal.korisnik.jmbg || '',
-            adresa: editModal.korisnik.adresa || '',
-            mesto: editModal.korisnik.mesto || '',
-            grad: editModal.korisnik.grad || '',
-            fotografija: editModal.korisnik.fotografija || '',
-            email: editModal.korisnik.email || '',
-            telefon: editModal.korisnik.telefon || '',
-            pozicija: editModal.korisnik.pozicija || '',
-            sektor: editModal.korisnik.sektor || '',
-            status_zaposlenja: editModal.korisnik.status_zaposlenja || '',
-            vrsta_zaposlenja: editModal.korisnik.vrsta_zaposlenja || '',
-            broj_radne_dozvole: editModal.korisnik.broj_radne_dozvole || '',
-            datum_pocetka: editModal.korisnik.datum_pocetka || '',
-            datum_zavrsetka: editModal.korisnik.datum_zavrsetka || '',
-            uloga: editModal.korisnik.uloga || '',
-            pristup: editModal.korisnik.pristup || '',
-            sifra: editModal.korisnik.sifra || '',
-            plata: editModal.korisnik.plata || '',
-            period_plate: editModal.korisnik.period_plate || '',
-            valuta: editModal.korisnik.valuta || '',
+          ugovor={{
+            broj_ugovora: editModal.ugovor.broj_ugovora || '',
+            korisnik_id: String(editModal.ugovor.zaposleni_id || ''),
+            korisnik_ime: editModal.ugovor.zaposleni?.ime || '',
+            korisnik_prezime: editModal.ugovor.zaposleni?.prezime || '',
+            datum_pocetka: editModal.ugovor.datum_pocetka || '',
+            datum_zavrsetka: editModal.ugovor.datum_zavrsetka || '',
+            tip_ugovora: editModal.ugovor.vrsta_ugovora || '',
+            status: editModal.ugovor.status || '',
+            napomena: editModal.ugovor.napomena || '',
+            datum_kreiranja: editModal.ugovor.datum_kreiranja || '',
+            datum_azuriranja: editModal.ugovor.datum_azuriranja || '',
+            dokument: editModal.ugovor.dokument || '',
+            uslovi: editModal.ugovor.uslovi || '',
           }}
           onSave={async (data) => {
-            // Sačuvaj izmenu korisnika u backendu
-            if (editModal && editModal.korisnik) {
-              await fetch(`/api/zaposleni/korisnici?id=${editModal.korisnik.id}`, {
+            // Sačuvaj izmenu ugovora u backendu
+            if (editModal && editModal.ugovor) {
+              await fetch(`/api/ugovori?id=${editModal.ugovor.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                  ...data,
+                  zaposleni_id: data.zaposleni_id,
+                  zaposleni_ime: data.zaposleni_ime,
+                  zaposleni_prezime: data.zaposleni_prezime,
+                })
               });
             }
             setEditModal(null);
@@ -768,7 +725,7 @@ export default function KorisniciTable({
           }}
         />
       )}
-      {editModal && !editModal.korisnik && (
+      {editModal && !editModal.ugovor && (
         <EditStavkaModal
           open={!!editModal}
           onClose={() => setEditModal(null)}

@@ -323,7 +323,7 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
         ime: data.ime || f.ime,
         prezime: data.prezime || f.prezime,
         jmbg: data.jmbg || f.jmbg,
-        pol: data.pol === 'M' ? 'Muški' : data.pol === 'Ž' ? 'Ženski' : f.pol,
+        pol: data.pol === 'M' ? 'M' : data.pol === 'Ž' ? 'Z' : f.pol,
         adresa: data.prebivaliste || f.adresa,
         datum_rodjenja: data.datum_rodjenja || f.datum_rodjenja,
         mesto: data.mesto_rodjenja || f.mesto,
@@ -430,8 +430,8 @@ const NoviKorisnikModal: React.FC<Props> = ({ open, onClose, onAdd, korisnik, ed
                     <label className="text-sm font-medium">Pol</label>
                     <select className="border rounded p-2" name="pol" value={form.pol || ''} onChange={handleInput} onBlur={handleBlur} required>
                       <option value="">Pol</option>
-                      <option>Muški</option>
-                      <option>Ženski</option>
+                      <option value="M">M</option>
+                      <option value="Z">Z</option>
                     </select>
                     {errors.pol && <div className="text-red-500 text-xs mt-1">* {errors.pol || 'Unesite pol'}</div>}
                   </div>
