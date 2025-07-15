@@ -15,7 +15,7 @@ import EditableCell from './EditableCell';
 import EditStavkaModal from './EditStavkaModal';
 import DeleteStavkaConfirm from './DeleteStavkaConfirm';
 import ReactDOM from 'react-dom';
-import ResizeHandle from './ResizeHandle';
+
 
 interface Korisnik {
   id: number;
@@ -150,39 +150,46 @@ export default function KorisniciTable({
   const [editModal, setEditModal] = useState<{row: unknown, column: unknown, value: string, korisnik?: Korisnik} | null>(null);
   const [deleteModal, setDeleteModal] = useState<{row: unknown, column: unknown, value: string} | null>(null);
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
+  const [resizing, setResizing] = useState<{ columnId: string; startX: number; startWidth: number } | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+  const resizeTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Dodaj lokalno stanje za širinu kolona i resize
-  const [columnWidths, setColumnWidths] = useState<{ [key: string]: number }>({});
-  const [resizingCol, setResizingCol] = useState<string | null>(null);
-  const [ghostX, setGhostX] = useState<number | null>(null);
-  const [resizeStartX, setResizeStartX] = useState<number | null>(null);
-  const [resizeStartWidth, setResizeStartWidth] = useState<number | null>(null);
+  // Resize funkcije
+  const handleResizeStart = (columnId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = columnSizing[columnId] || 160;
+    setResizing({ columnId, startX, startWidth });
+  };
 
-  // Funkcija za start resize-a
-  function handleResizeStart(colId: string, startX: number, startWidth: number) {
-    setResizingCol(colId);
-    setResizeStartX(startX);
-    setResizeStartWidth(startWidth);
-    setGhostX(startX);
-  }
-  // Funkcija za resize
-  function handleResize(deltaX: number) {
-    if (resizeStartX !== null && resizingCol && resizeStartWidth !== null) {
-      setGhostX(resizeStartX + deltaX);
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!resizing) return;
+    
+    const deltaX = e.clientX - resizing.startX;
+    const newWidth = Math.max(80, Math.min(400, resizing.startWidth + deltaX));
+    
+    // Ažuriraj samo trenutnu kolonu
+    setColumnSizing(prev => ({
+      ...prev,
+      [resizing.columnId]: newWidth
+    }));
+  };
+
+  const handleResizeEnd = () => {
+    setResizing(null);
+  };
+
+  // Event listeners za resize
+  React.useEffect(() => {
+    if (resizing) {
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('mouseup', handleResizeEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+      };
     }
-  }
-  // Funkcija za kraj resize-a
-  function handleResizeEnd() {
-    if (resizingCol && resizeStartX !== null && ghostX !== null && resizeStartWidth !== null) {
-      const newWidth = Math.max(80, resizeStartWidth + (ghostX - resizeStartX));
-      setColumnWidths((prev) => ({ ...prev, [resizingCol]: newWidth }));
-      setColumnSizing((prev: any) => ({ ...prev, [resizingCol]: newWidth })); // NOVO: ažuriraj react-table state
-    }
-    setResizingCol(null);
-    setGhostX(null);
-    setResizeStartX(null);
-    setResizeStartWidth(null);
-  }
+  }, [resizing]);
 
   visibleColumns = (visibleColumns && visibleColumns.length > 0) ? visibleColumns : DEFAULT_COLUMNS;
   columnOrder = (columnOrder && columnOrder.length > 0) ? columnOrder : DEFAULT_COLUMNS;
@@ -273,64 +280,61 @@ export default function KorisniciTable({
   });
 
   // Da li je bilo koji popup otvoren
-  const anyPopupOpen = Boolean(openHeaderMenu || menuOpenRow || columnsOpen || filterOpen);
+  const anyPopupOpen = Boolean(openHeaderMenu || menuOpenRow || columnsOpen || filterOpen || editModal || deleteModal);
 
   return (
     <div className="relative">
-      {loading ? (
-        <div className="overflow-x-auto w-full border-t border-l border-r border-gray-300 rounded-t-xl animate-pulse">
-          <table className="min-w-full table-fixed border-collapse divide-y divide-gray-300">
-            <thead>
-              <tr className="bg-[#f5f6fa]">
-                <th className="p-2 text-left font-medium text-gray-300 border-b border-gray-300 bg-[#f5f6fa] select-none w-8" style={{ minWidth: 40 }}>
-                  <div className="h-4 w-4 bg-gray-200 rounded" />
-                </th>
-                {visibleColumns.map((col, idx) => (
-                  <th key={col} className="p-2 text-left font-bold border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none">
-                    <div className="h-4 w-24 bg-gray-200 rounded" />
-                  </th>
-                ))}
-                <th className="p-2 text-center font-bold border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none" style={{ width: 80, minWidth: 80 }}>
-                  <div className="h-4 w-12 bg-gray-200 rounded" />
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...Array(6)].map((_, i) => (
-                <tr key={i}>
-                  <td className="p-2 w-8"><div className="h-4 w-4 bg-gray-100 rounded" /></td>
-                  {visibleColumns.map((col, j) => (
-                    <td key={j} className="p-2"><div className="h-4 w-24 bg-gray-100 rounded" /></td>
-                  ))}
-                  <td className="p-2 text-center"><div className="h-4 w-12 bg-gray-100 rounded" /></td>
-                </tr>
+      <div className="overflow-x-auto overflow-y-auto max-h-[600px] w-full border border-gray-300 rounded-xl relative">
+        {loading && (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Učitavanje tabele...</div>
+          </div>
+        )}
+        <table ref={tableRef} className="min-w-full border-collapse divide-y divide-gray-300" style={{ tableLayout: 'fixed' }}>
+            <colgroup>
+              {/* Fiksna checkbox kolona */}
+              <col 
+                key="checkbox" 
+                style={{ 
+                  width: '20px',
+                  minWidth: '20px',
+                  maxWidth: '20px'
+                }} 
+              />
+              {/* Sve ostale kolone */}
+              {visibleColumns.map((col, idx) => (
+                <col 
+                  key={col} 
+                  style={{ 
+                    width: `${columnSizing[col] || 160}px`,
+                    minWidth: '80px',
+                    maxWidth: '400px'
+                  }} 
+                />
               ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="overflow-x-auto w-full border-t border-l border-r border-gray-300 rounded-t-xl">
-          <table className="min-w-full table-fixed border-collapse divide-y divide-gray-300" style={{ tableLayout: 'auto' }}>
+            </colgroup>
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id} className="bg-[#f5f6fa]">
+                <tr key={headerGroup.id} className="bg-[#f5f6fa] rounded-t-xl">
                   {/* Checkbox za selektovanje svih */}
-                  <th className="p-2 text-left font-medium text-gray-700 border-b border-gray-300 bg-[#f5f6fa] select-none w-8" style={{ minWidth: 40 }}>
+                  <th className="p-1 text-left font-medium text-gray-700 border-b border-gray-300 bg-[#f5f6fa] select-none w-6 rounded-tl-xl" style={{ minWidth: 24 }}>
                     <input
                       type="checkbox"
                       checked={allSelected}
                       onChange={e => onSelectAll(e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                     />
                   </th>
                   {headerGroup.headers.map((header, idx) => (
-                    <th
-                      key={header.id}
-                      className="p-2 text-left font-bold text-gray-700 relative group border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none"
+                                          <th
+                        key={header.id}
+                        data-column-id={header.id}
+                        className="p-2 text-left font-bold text-gray-700 relative group border-b border-gray-300 text-[13px] select-none"
                       style={{
-                        width: columnSizing[header.id] ? columnSizing[header.id] + 'px' : header.getSize() ? header.getSize() + 'px' : undefined,
-                        minWidth: header.column.columnDef.minSize ? header.column.columnDef.minSize + 'px' : '80px',
-                        maxWidth: header.column.columnDef.maxSize ? header.column.columnDef.maxSize + 'px' : undefined
+                        width: `${columnSizing[header.id] || 160}px`,
+                        minWidth: '80px',
+                        maxWidth: '400px'
                       }}
                     >
                       <div
@@ -373,7 +377,7 @@ export default function KorisniciTable({
                               </svg>
                             </button>
                             {openHeaderMenu === header.id && (
-                              <div className={idx === 0 ? "absolute left-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm" : "absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 py-1 text-sm"}>
+                              <div className={idx === 0 ? "absolute left-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm" : "absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-[9999] py-1 text-sm"}>
                                 {/* Prva kolona: abecedno + sakrij kolonu, sortirano */}
                                 {idx === 0 ? (
                                   <>
@@ -490,15 +494,14 @@ export default function KorisniciTable({
                             )}
                           </div>
                         )}
-                        {/* Novi robustan resize handle */}
-                        {header.column.getCanResize && header.column.getCanResize() && (
-                          <ResizeHandle
-                            onResizeStart={(startX) => handleResizeStart(header.id, startX, columnWidths[header.id] || header.getSize() || 160)}
-                            onResize={handleResize}
-                            onResizeEnd={handleResizeEnd}
-                          />
-                        )}
                       </div>
+                                              {/* Custom resize handle - sada i za korisnik kolonu */}
+                        <div
+                          className={`resize-handle ${anyPopupOpen ? 'hidden' : ''}`}
+                          onMouseDown={(e) => handleResizeStart(header.id, e)}
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ pointerEvents: 'auto' }}
+                        />
                       {/* Zatvori meni klikom van */}
                       {openHeaderMenu && (
                         <div className="fixed inset-0 z-30" onClick={() => { setOpenHeaderMenu(null); setHeaderMenuHover(null); }} />
@@ -506,7 +509,7 @@ export default function KorisniciTable({
                     </th>
                   ))}
                   {/* Akcije kolona header */}
-                  <th className="p-2 text-center font-bold text-gray-700 border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none" style={{ width: 80, minWidth: 80 }}>
+                  <th className="p-2 text-center font-bold text-gray-700 border-b border-gray-300 text-[13px] bg-[#f5f6fa] select-none rounded-tr-xl" style={{ width: 80, minWidth: 80 }}>
                     Akcije
                   </th>
                 </tr>
@@ -529,25 +532,26 @@ export default function KorisniciTable({
                 table.getRowModel().rows.map((row, idx, arr) => (
                   <tr key={row.id} className={idx !== arr.length - 1 ? "border-b" : ""}>
                     {/* Checkbox za selektovanje reda */}
-                    <td className="p-2 w-8">
+                    <td className="p-1 w-6">
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(row.original.id)}
                         onChange={e => onSelect(row.original.id, e.target.checked)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                       />
                     </td>
                     {row.getVisibleCells().map((cell) => {
                       // Ne prikazuj editable za checkbox i akcije kolonu
                       const isEditable = cell.column.id !== 'akcije' && cell.column.id !== 'select';
                       return (
-                        <td
-                          key={cell.id}
-                          className="p-2 text-[13px] bg-white transition-all duration-300 overflow-visible text-ellipsis whitespace-nowrap relative group"
+                                                  <td
+                            key={cell.id}
+                            data-column-id={cell.column.id}
+                            className="p-2 text-[13px] bg-white transition-all duration-300 overflow-visible text-ellipsis whitespace-nowrap relative group"
                           style={{
-                            width: columnSizing[cell.column.id] ? columnSizing[cell.column.id] + 'px' : cell.column.getSize() ? cell.column.getSize() + 'px' : undefined,
-                            minWidth: cell.column.columnDef.minSize ? cell.column.columnDef.minSize + 'px' : '80px',
-                            maxWidth: cell.column.columnDef.maxSize ? cell.column.columnDef.maxSize + 'px' : undefined
+                            width: `${columnSizing[cell.column.id] || 160}px`,
+                            minWidth: '80px',
+                            maxWidth: '400px'
                           }}
                         >
                           {isEditable ? (
@@ -713,7 +717,6 @@ export default function KorisniciTable({
             </tbody>
           </table>
         </div>
-      )}
       
       {/* Zatvaranje menija kada se klikne van tabele */}
       {menuOpenRow && (
@@ -793,13 +796,8 @@ export default function KorisniciTable({
           }}
         />
       )}
-      {/* Ghost linija dok traje resize */}
-      {resizingCol && ghostX !== null && (
-        <div
-          className="fixed top-0 bottom-0 w-0.5 bg-blue-500 z-[99999] pointer-events-none"
-          style={{ left: ghostX + 'px' }}
-        />
-      )}
+
+    
     </div>
   );
 } 
