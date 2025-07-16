@@ -318,10 +318,11 @@ export default function UgovoriPage() {
                   <ColumnsMenu
                     open={columnsOpen}
                     onClose={() => setColumnsOpen(false)}
-                    visibleColumns={visibleColumns}
-                    onToggleColumn={handleToggleColumn}
-                    columnOrder={columnOrder}
-                    onOrderChange={setColumnOrder}
+                    selected={visibleColumns}
+                    onChange={(cols, visible) => {
+                      setColumnOrder(cols);
+                      setVisibleColumns(visible);
+                    }}
                   />
                 )}
               </div>
@@ -334,7 +335,6 @@ export default function UgovoriPage() {
               ugovori={paginatedUgovori}
               visibleColumns={visibleColumns}
               columnOrder={columnOrder}
-              onToggleColumn={handleToggleColumn}
               onOrderChange={setColumnOrder}
               selectedIds={selectedIds}
               onSelect={handleSelect}

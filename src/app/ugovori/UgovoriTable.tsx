@@ -23,7 +23,6 @@ interface UgovoriTableProps {
   ugovori: Ugovor[];
   visibleColumns: string[];
   columnOrder: string[];
-  onToggleColumn: (column: string) => void;
   onOrderChange: (updaterOrValue: string[] | ((old: string[]) => string[])) => void;
   selectedIds?: number[];
   onSelect?: (id: number, checked: boolean) => void;
@@ -91,7 +90,6 @@ export default function UgovoriTable({
   ugovori,
   visibleColumns,
   columnOrder,
-  onToggleColumn,
   onOrderChange,
   selectedIds = [],
   onSelect = () => {},
@@ -352,7 +350,6 @@ export default function UgovoriTable({
                                       onClick={() => {
                                         setOpenHeaderMenu(null);
                                         setHeaderMenuHover(null);
-                                        if (onToggleColumn) onToggleColumn(header.column.id);
                                       }}
                                     >
                                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]">
@@ -408,7 +405,6 @@ export default function UgovoriTable({
                                       onClick={() => {
                                         setOpenHeaderMenu(null);
                                         setHeaderMenuHover(null);
-                                        if (onToggleColumn) onToggleColumn(header.column.id);
                                       }}
                                     >
                                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#5B2EFF]">
