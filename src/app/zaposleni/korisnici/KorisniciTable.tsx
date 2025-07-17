@@ -100,7 +100,7 @@ function formatDatumBezVremena(datum?: string) {
 }
 
 const columnLabels: Record<string, string> = {
-  korisnik: 'Zaposleni',
+  zaposleni: 'Zaposleni',
   uloga: 'Uloga',
   pristup: 'Pristup',
   broj_radne_dozvole: 'Broj radne dozvole',

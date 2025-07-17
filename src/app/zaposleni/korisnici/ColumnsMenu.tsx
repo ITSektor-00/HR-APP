@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const ALL_COLUMNS = [
-  { key: 'korisnik', label: 'Korisnik' },
+  { key: 'zaposleni', label: 'Zaposleni' },
   { key: 'uloga', label: 'Uloga' },
   { key: 'pristup', label: 'Pristup' },
   { key: 'broj_radne_dozvole', label: 'Broj radne dozvole' },
