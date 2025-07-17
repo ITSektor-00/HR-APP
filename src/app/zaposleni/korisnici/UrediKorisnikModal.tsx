@@ -178,7 +178,7 @@ const UrediKorisnikModal: React.FC<Props> = ({ open, onClose, onSave, korisnik }
       <div className="relative bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden z-50">
         {/* Header bez border-b */}
         <div className="flex justify-between items-center p-6">
-          <h2 className="text-2xl font-bold">Uredi korisnika</h2>
+          <h2 className="text-2xl font-bold">Uredi zaposlenog</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
         </div>
 

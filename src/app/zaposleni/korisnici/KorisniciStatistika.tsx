@@ -52,7 +52,7 @@ const KorisniciStatistika: React.FC<Props> = ({ korisnici }) => {
     <div className="w-full flex flex-col gap-8">
       <div className="flex items-center gap-2 mb-8">
         <Image src="/statistic.svg" alt="Statistika" width={36} height={36} />
-        <span className="text-3xl font-semibold">Statistika korisnika</span>
+        <span className="text-3xl font-semibold">Statistika zaposlenih</span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10 pb-8">
         {/* Polna struktura */}

@@ -25,7 +25,7 @@ const sections = [
     ] as NavLink[],
   },
   {
-    title: 'Korisnici',
+    title: 'Zaposleni',
     links: [
       { href: '/zaposleni/korisnici', label: 'Zaposleni', icon: <DynamicIcon iconName="korisnici" alt="Zaposleni" /> },
       { href: '/korisnici/beleske', label: 'Beleške', icon: <DynamicIcon iconName="beleske" alt="Beleške" /> },

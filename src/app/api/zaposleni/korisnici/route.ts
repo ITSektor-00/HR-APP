@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
   const values: string[] = [];
   let idx = 1;
   // Specijalan slučaj: pretraga po imenu ili prezimenu
-  const korisnikParam = searchParams.get('korisnik');
-  if (korisnikParam && korisnikParam !== '') {
-    const terms = korisnikParam.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const zaposleniParam = searchParams.get('zaposleni');
+  if (zaposleniParam && zaposleniParam !== '') {
+    const terms = zaposleniParam.trim().toLowerCase().split(/\s+/).filter(Boolean);
     for (const term of terms) {
       where.push(`(
         LOWER(ime) LIKE LOWER($${idx})

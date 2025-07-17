@@ -72,7 +72,7 @@ interface KorisnikData {
 const initialKorisnici: Korisnik[] = [];
 
 const ALL_COLUMNS = [
-  'korisnik',
+  'zaposleni',
   'uloga',
   'pristup',
   'broj_radne_dozvole',
@@ -130,7 +130,7 @@ export default function KorisniciPage() {
         body: JSON.stringify(novi),
       });
       if (res.ok) {
-        setToast({msg: 'Korisnik uspešno dodat!', type: 'success'});
+        setToast({msg: 'Zaposleni uspešno dodat!', type: 'success'});
         setModalOpen(false);
         fetchKorisnici();
       } else {
@@ -147,12 +147,12 @@ export default function KorisniciPage() {
     // Generiši CSV na frontendu
     const rows = korisnici.map((k: Korisnik) => {
       return columns.map(col => {
-        if (col === 'korisnik') return `${k.ime || ''} ${k.prezime || ''}`.trim();
+        if (col === 'zaposleni') return `${k.ime || ''} ${k.prezime || ''}`.trim();
         return k[col] ?? '';
       });
     });
     const headerLabels: Record<string, string> = {
-      id: 'Identifikator', pristup: 'Pristup', datum_pocetka: 'Datum početka zaposlenja', uloga: 'Uloga', korisnik: 'Korisnik', datum_zavrsetka: 'Datum završetka zaposlenja', status_zaposlenja: 'Status zaposlenja', vrsta_zaposlenja: 'Vrsta zaposlenja', pozicija: 'Pozicija', sektor: 'Sektor', broj_radne_dozvole: 'Broj radne dozvole', datum_kreiranja: 'Datum kreiranja', datum_azuriranja: 'Datum ažuriranja'
+      id: 'Identifikator', pristup: 'Pristup', datum_pocetka: 'Datum početka zaposlenja', uloga: 'Uloga', zaposleni: 'Zaposleni', datum_zavrsetka: 'Datum završetka zaposlenja', status_zaposlenja: 'Status zaposlenja', vrsta_zaposlenja: 'Vrsta zaposlenja', pozicija: 'Pozicija', sektor: 'Sektor', broj_radne_dozvole: 'Broj radne dozvole', datum_kreiranja: 'Datum kreiranja', datum_azuriranja: 'Datum ažuriranja'
     };
     const header = columns.map(col => headerLabels[col] || col);
     const csv = '\uFEFF' + [header, ...rows].map(r => r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(',')).join('\r\n');
@@ -160,7 +160,7 @@ export default function KorisniciPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'korisnici.csv';
+    a.download = 'zaposleni.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -181,10 +181,10 @@ export default function KorisniciPage() {
     setTimeout(() => setCitacLoading(false), 1000);
   };
 
-  // Frontend filter za korisnika (ime ili prezime)
+  // Frontend filter za zaposlenog (ime ili prezime)
   let filteredKorisnici = korisnici;
-  if (filterValues.korisnik && filterValues.korisnik.trim() !== '') {
-    const q = filterValues.korisnik.trim().toLowerCase();
+  if (filterValues.zaposleni && filterValues.zaposleni.trim() !== '') {
+    const q = filterValues.zaposleni.trim().toLowerCase();
     const terms = q.split(/\s+/).filter(Boolean);
     filteredKorisnici = korisnici.filter(k => {
       const ime = (k.ime || '').toString().toLowerCase();
@@ -213,7 +213,7 @@ export default function KorisniciPage() {
         method: 'DELETE' 
       });
       if (res.ok) {
-        setToast({msg: 'Korisnik uspešno obrisan!', type: 'success'});
+        setToast({msg: 'Zaposleni uspešno obrisan!', type: 'success'});
         fetchKorisnici(filterValues);
       } else {
         const err = await res.json();
@@ -240,7 +240,7 @@ export default function KorisniciPage() {
         body: JSON.stringify(updatedKorisnik),
       });
       if (res.ok) {
-        setToast({msg: 'Korisnik uspešno ažuriran!', type: 'success'});
+        setToast({msg: 'Zaposleni uspešno ažuriran!', type: 'success'});
         setEditModalOpen(false);
         setEditingKorisnik(null);
         fetchKorisnici(filterValues);
@@ -301,7 +301,7 @@ export default function KorisniciPage() {
           <div className="w-10 h-10 md:w-16 md:h-16 rounded-lg flex items-center justify-center" style={{backgroundColor: '#3A3CA6'}}>
             <Image src="/ikonice/beleIkonice/korisniciBelo.svg" alt="Korisnici" width={40} height={40} />
           </div>
-          <h1 className="text-4xl font-bold ml-2">Korisnici</h1>
+          <h1 className="text-4xl font-bold ml-2">Zaposleni</h1>
         </div>
         <Button 
           onClick={handleDownloadCitac} 
@@ -358,7 +358,7 @@ export default function KorisniciPage() {
             <div className="flex flex-wrap items-center gap-2 justify-end">
               {selectedIds.length > 0 && (
                 <Button variant="destructive" onClick={async () => {
-                  const confirmed = window.confirm('Da li ste sigurni da želite da obrišete izabrane korisnike?');
+                  const confirmed = window.confirm('Da li ste sigurni da želite da obrišete izabrane zaposlene?');
                   if (confirmed) {
                     for (const id of selectedIds) {
                       await handleDelete(id);
@@ -374,7 +374,7 @@ export default function KorisniciPage() {
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
                   <path stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5"/>
                 </svg>
-                Novi korisnik
+                Novi zaposleni
               </Button>
               <Button variant="outline" onClick={() => setExportOpen(true)} className="hover:bg-gray-50 active:bg-gray-100 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none">Izvoz</Button>
               <div className="relative">

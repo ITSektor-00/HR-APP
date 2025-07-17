@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 export type KorisniciFilterValues = {
-  korisnik?: string;
+  zaposleni?: string;
   uloga?: string;
   pristup?: string;
   broj_radne_dozvole?: string;
@@ -56,8 +56,8 @@ export default function KorisniciFilter({ open, onClose, onFilter, initialValues
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 w-full max-w-5xl">
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-semibold mb-1">Korisnik</label>
-            <input name="korisnik" value={values.korisnik || ''} onChange={handleChange} className="w-full border rounded p-2" placeholder="Ime ili prezime" />
+                    <label className="block text-sm font-semibold mb-1">Zaposleni</label>
+        <input name="zaposleni" value={values.zaposleni || ''} onChange={handleChange} className="w-full border rounded p-2" placeholder="Ime ili prezime" />
           </div>
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-semibold mb-1">Uloga</label>

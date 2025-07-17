@@ -100,7 +100,7 @@ function formatDatumBezVremena(datum?: string) {
 }
 
 const columnLabels: Record<string, string> = {
-  korisnik: 'Korisnik',
+  korisnik: 'Zaposleni',
   uloga: 'Uloga',
   pristup: 'Pristup',
   broj_radne_dozvole: 'Broj radne dozvole',
@@ -115,7 +115,7 @@ const columnLabels: Record<string, string> = {
 };
 
 const DEFAULT_COLUMNS = [
-  "korisnik", "uloga", "pristup", "broj_radne_dozvole", "pozicija",
+  "zaposleni", "uloga", "pristup", "broj_radne_dozvole", "pozicija",
   "status_zaposlenja", "vrsta_zaposlenja", "sektor",
   "datum_pocetka", "datum_zavrsetka", "datum_kreiranja", "datum_azuriranja"
 ];
@@ -205,7 +205,7 @@ export default function KorisniciTable({
       cell: (info: {row: {original: Korisnik}}) => {
         const k = info.row.original;
         switch (key) {
-          case 'korisnik':
+          case 'zaposleni':
             return (
               <span className="flex items-center gap-2">
                 {k.fotografija && !k.fotografija.includes('default-user.jpg') && k.fotografija.trim() !== '' ? (

@@ -66,7 +66,7 @@ const KorisnikEditPopup: React.FC<KorisnikEditPopupProps> = ({ open, onClose, ko
       {/* Toast za uspešno ažuriranje */}
       {success && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded shadow-lg text-base font-semibold z-[99999] animate-fade-in">
-          Korisnik uspešno ažuriran!
+          Zaposleni uspešno ažuriran!
         </div>
       )}
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[95vh] overflow-y-auto p-0 flex flex-col items-center justify-center">
